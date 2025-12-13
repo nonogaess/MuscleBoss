@@ -1312,7 +1312,7 @@
         box-shadow: 0 6px 16px rgba(27, 201, 199, 0.4);
       }
 
-      .day-btn:hover:not(.active)) {
+      .day-btn:hover:not(.active) {
         background: #1F2937;
       }
 
@@ -1529,6 +1529,11 @@
             <option value="Dancho">Dancho</option>
           </select>
         </div>
+          <label style="margin-left:10px; font-size:0.85rem; color:#9ca3af;">
+            Poids (kg) :
+            <input id="bodyweightInput" type="number" min="30" max="200"
+                  style="width:70px; margin-left:6px; padding:4px 6px; border-radius:6px;">
+          </label>
         <div class="control-row">
           <label>Date</label>
           <input type="date" id="dateInput" />
@@ -1844,7 +1849,7 @@
       "Épaules": 70,
       "Biceps": 50,
       "Triceps": 70,
-      "Abdos": 0,    // à traiter à part
+      "Abdos": 60,    // à traiter à part
       "Cardio": 0    // à traiter à part
     };
 
@@ -1915,16 +1920,123 @@
       localStorage.setItem("musclePlayerProfile", JSON.stringify(playerProfile));
     }
 
+    // ====== POIDS PAR UTILISATEUR ======
+    let bodyweightByUser = {
+      Arnaud: 80,   // mets tes valeurs par défaut
+      Dancho: 72
+    };
+
+    function loadBodyweights() {
+      const raw = localStorage.getItem("muscleBodyweightByUser");
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          bodyweightByUser = { ...bodyweightByUser, ...parsed };
+        } catch (e) {
+          console.warn("Poids par user invalide, on garde les défauts.");
+        }
+      }
+    }
+
+    function saveBodyweights() {
+      localStorage.setItem("muscleBodyweightByUser", JSON.stringify(bodyweightByUser));
+    }
+
+    function getUserBodyweight(user) {
+      const bw = Number(bodyweightByUser[user]);
+      return bw > 0 ? bw : 0;
+    }
+
+    function setUserBodyweight(user, kg) {
+      const v = Number(kg);
+      bodyweightByUser[user] = (v > 0 ? v : 0);
+      saveBodyweights();
+    }
+
     // ========== HELPERS ==========
-    function loadState() {
+    
+    // ===== IDs stables pour éviter la suppression de séries identiques =====
+    function hashStringDJB2(str) {
+      let h = 5381;
+      for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) + h) + str.charCodeAt(i); // h * 33 + c
+        h = h >>> 0; // uint32
+      }
+      return h.toString(16);
+    }
+
+    function makeContentKey(log) {
+      const w = Number(log.weight) || 0;
+      const reps = Number(log.reps) || 0;
+      const mode = log.mode || "";
+      const rpe = (log.rpe != null) ? String(log.rpe) : "";
+      return `${log.user}|${log.date}|${log.exerciseId}|${w}|${reps}|${mode}|${rpe}`;
+    }
+
+    function makeStableLogId(log, occurrence) {
+      const base = makeContentKey(log) + `|#${occurrence}`;
+      return "L" + hashStringDJB2(base);
+    }
+
+    function makeRandomLogId() {
+      try {
+        if (crypto && typeof crypto.randomUUID === "function") {
+          return crypto.randomUUID();
+        }
+      } catch (e) {}
+      return "L" + Date.now().toString(36) + Math.random().toString(36).slice(2);
+    }
+
+    function normalizeLog(raw) {
+      return {
+        id: raw.id || null,
+        user: raw.user,
+        date: raw.date,
+        exerciseId: raw.exerciseId,
+        weight: Number(raw.weight) || 0,
+        reps: Number(raw.reps) || 0,
+        rpe: raw.rpe != null ? Number(raw.rpe) : null,
+        mode: raw.mode || null
+      };
+    }
+
+    // Assigne des IDs stables aux logs qui n'en ont pas, en conservant les doublons (séries identiques)
+    function assignStableIdsToLogs(logs) {
+      const counters = new Map();
+      return (logs || []).map(l => {
+        const log = normalizeLog(l);
+        const key = makeContentKey(log);
+        const c = (counters.get(key) || 0) + 1;
+        counters.set(key, c);
+
+        if (!log.id) {
+          log.id = makeStableLogId(log, c);
+        }
+        return log;
+      });
+    }
+
+    function safeMax(arr) {
+      if (!Array.isArray(arr)) return null;
+      const clean = arr.filter(v => v != null && Number.isFinite(v));
+      return clean.length ? Math.max(...clean) : null;
+    }
+
+function loadState() {
       const saved = localStorage.getItem("muscleAppState");
-      if (saved) {
+      if (!saved) return;
+
+      try {
         const parsed = JSON.parse(saved);
-        state.logs = parsed.logs || [];
+        state.logs = assignStableIdsToLogs(parsed.logs || []);
         state.user = parsed.user || state.user;
         state.date = parsed.date || state.date;
         state.fatigue = parsed.fatigue || state.fatigue;
         state.currentDay = parsed.currentDay || state.currentDay;
+      } catch (e) {
+        console.warn("⚠️ muscleAppState corrompu : reset safe.", e);
+        // Reset "safe" sans casser l'app
+        state.logs = assignStableIdsToLogs([]);
       }
     }
 
@@ -1946,7 +2058,7 @@
       return weight * (1 + reps / 30);
     }
 
-        // Poids "effectif" utilisé dans tous les calculs (volume, 1RM, etc.)
+        // (Legacy) Poids "effectif" : gardé pour compatibilité / tests (les calculs utilisent getEffectiveWeightForVolume/1RM)
         function getEffectiveWeight(log) {
           const raw = Number(log.weight) || 0;
           const mode = log.mode || "total"; // fallback : total
@@ -1979,6 +2091,36 @@
 
     function clamp(val, min, max) {
       return Math.max(min, Math.min(max, val));
+    }
+
+    function computeAbsScoreFromLogs(user, sinceDateStr) {
+      const logs = state.logs.filter(l =>
+        l.user === user &&
+        l.date >= sinceDateStr &&
+        (exerciseToMuscle[l.exerciseId] === "Abdos" || l.exerciseId === "core_combo")
+      );
+
+      if (logs.length === 0) return 0;
+
+      // Total reps abdos sur 30 jours
+      let totalReps = 0;
+      const dates = new Set();
+
+      logs.forEach(l => {
+        totalReps += (Number(l.reps) || 0);
+        dates.add(l.date);
+      });
+
+      const sessionsWithAbs = dates.size;
+
+      // Objectifs (ajustables) :
+      // - 600 reps / 30j ≈ très solide (ex: 10 séances × 60 reps)
+      // - bonus léger si tu fais des abdos sur plusieurs jours
+      const repsScore = clamp((totalReps / 600) * 100, 0, 100);
+      const freqBonus = clamp((sessionsWithAbs / 10) * 15, 0, 15); // max +15
+
+      // On plafonne à 100, et on garde un résultat progressif (pas 0, pas 100 gratuit)
+      return Math.round(clamp(repsScore + freqBonus, 0, 100));
     }
 
     function buildFifaBarRow(label, value) {
@@ -2022,18 +2164,28 @@
       const mode = getLogMode(log);
 
       if (mode === "per_arm") {
-        // 20 kg par bras => 40 kg de tonnage
+        // 20 kg par bras => 40 kg de tonnage (volume total)
         return w * 2;
       }
 
-      if (mode === "bodyweight" || mode === "virtual") {
-        // Pour l'instant, on ne compte pas de tonnage pour le poids du corps / abdos.
-        // On pourra plus tard brancher une "charge virtuelle" (ex : 0.25 × poids du corps).
-        return 0;
+      if (mode === "virtual") {
+        // Abdos / mouvements sans leste : on garde un petit tonnage "symbolique"
+        // - Si un poids est saisi, on l'utilise
+        // - Sinon, on applique 5 kg par défaut pour éviter que ça tombe à 0
+        return w > 0 ? w : 5;
+      }
+
+      if (mode === "bodyweight") {
+        // Poids du corps : si le log contient déjà le poids, on l'utilise,
+        // sinon on récupère le poids utilisateur, puis on applique un facteur (≈ 40%).
+        const bw = (w > 0) ? w : getUserBodyweight(log.user);
+        if (bw <= 0) return 10; // fallback symbolique si poids inconnu
+        return bw * 0.4;
       }
 
       // "total" et fallback
       return w;
+
     }
 
     // Poids effectif pour les calculs de 1RM (force "par bras" si tu as loggé par bras)
@@ -2041,15 +2193,25 @@
       const w = Number(log.weight) || 0;
       const mode = getLogMode(log);
 
-      if (mode === "bodyweight") {
-        // Même logique que pour getEffectiveWeight : on ne compte pas 100% du poids du corps
-        if (w <= 0) return 0;
-        return w * 0.4;
+      if (mode === "per_arm") {
+        // Cohérence avec le volume : si tu logges "par bras", on considère la charge totale pour la force.
+        return w * 2;
       }
 
-      // Pour le reste (per_arm, total, virtual), on garde la logique actuelle :
-      // 1RM = "poids saisi" interprété comme charge principale.
+      if (mode === "virtual") {
+        // Même logique que le volume : jamais 0 si tu ne mets pas de poids
+        return w > 0 ? w : 5;
+      }
+
+      if (mode === "bodyweight") {
+        const bw = (w > 0) ? w : getUserBodyweight(log.user);
+        if (bw <= 0) return 0;
+        return bw * 0.4;
+      }
+
+      // "total" et fallback
       return w;
+
     }
 
     // ========== DOM ELEMENTS ==========
@@ -2076,6 +2238,7 @@
     const modalClose = document.getElementById("modalClose");
     const modalTitle = document.getElementById("modalTitle");
     const fatigueSelect = document.getElementById("fatigueSelect");
+    const bodyweightInput = document.getElementById("bodyweightInput");
 
     // ========== TAB SWITCHING ==========
     tabButtons.forEach(btn => {
@@ -2113,12 +2276,27 @@
     userSelect.addEventListener("change", (e) => {
       state.user = e.target.value;
       saveState();
+
+      if (bodyweightInput) {
+        bodyweightInput.value = getUserBodyweight(state.user) || "";
+      }
+
       renderEntrainement();
       renderStatistics();
       renderProgression();
       renderHome();
       updateTheme();
     });
+
+    if (bodyweightInput) {
+      bodyweightInput.addEventListener("change", (e) => {
+        setUserBodyweight(state.user, e.target.value);
+        // optionnel: rerender pour que les scores se recalculent direct
+        renderStatistics();
+        renderProgression();
+        renderHome();
+      });
+    }
 
     dateInput.addEventListener("change", (e) => {
       state.date = e.target.value;
@@ -2162,7 +2340,7 @@
       importFileInput.click();
     });
 
-    // ---- NOUVEL IMPORT SAIN ----
+    // ---- NOUVEL IMPORT SAIN (IDs + séries identiques conservées) ----
     importFileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -2177,32 +2355,17 @@
             return;
           }
 
-          const importedLogs = json.logs;
+          // 1) Normalisation + IDs stables (conserve les séries identiques)
+          const importedLogs = assignStableIdsToLogs(json.logs);
 
-          // Fusionner log par log (sans supprimer l'existant)
+          // 2) On s'assure que les logs existants ont des IDs
+          state.logs = assignStableIdsToLogs(state.logs);
+
+          // 3) Fusion par ID (si même ID => on remplace, sinon on ajoute)
           const map = new Map();
+          state.logs.forEach(l => map.set(l.id, l));
+          importedLogs.forEach(l => map.set(l.id, l));
 
-          // 1) On indexe les logs existants
-          state.logs.forEach(l => {
-            const key = `${l.user}_${l.date}_${l.exerciseId}_${l.weight}_${l.reps}`;
-            map.set(key, l);
-          });
-
-          // 2) On ajoute les logs du fichier (écrase si même clé)
-          importedLogs.forEach(l => {
-            const key = `${l.user}_${l.date}_${l.exerciseId}_${l.weight}_${l.reps}`;
-            map.set(key, {
-              user: l.user,
-              date: l.date,
-              exerciseId: l.exerciseId,
-              weight: Number(l.weight) || 0,
-              reps: Number(l.reps) || 0,
-              rpe: l.rpe != null ? Number(l.rpe) : null,
-              mode: l.mode || null
-            });
-          });
-
-          // 3) Mise à jour du state
           state.logs = Array.from(map.values());
 
           saveState();
@@ -2437,15 +2600,20 @@
 
           muscles.forEach(muscle => {
             const mLogs = logs.filter(l => exerciseToMuscle[l.exerciseId] === muscle);
-            if (mLogs.length === 0) {
-              byMuscle[muscle] = 0;
+
+            if (muscle === "Abdos") {
+              byMuscle[muscle] = computeAbsScoreFromLogs(user, cutoffStr);
               return;
             }
+
+            if (mLogs.length === 0) { byMuscle[muscle] = 0; return; }
+
             let best1RM = 0;
-            mLogs.forEach(l => {
-              const est = estimateLog1RM(l);
-              if (est > best1RM) best1RM = est;
+            mLogs.forEach(l => { 
+              const est = estimateLog1RM(l); 
+              if (est > best1RM) best1RM = est; 
             });
+
             const ref = musclePerformanceRef[muscle] || 0;
             byMuscle[muscle] = ref ? clamp((best1RM / ref) * 100, 0, 100) : 0;
           });
@@ -2850,6 +3018,10 @@
           const m = exerciseToMuscle[l.exerciseId];
           return l.user === user && m === muscle;
         });
+
+        if (muscle === "Abdos") {
+          return computeAbsScoreFromLogs(user, cutoffStr);
+        }
 
         if (logs.length === 0) return 0;
 
@@ -3318,8 +3490,8 @@
         }
       });
 
-            const bestArnaud = Math.max(...dataArnaud.filter(v => v !== null));
-      const bestDancho = Math.max(...dataDancho.filter(v => v !== null));
+            const bestArnaud = safeMax(dataArnaud);
+      const bestDancho = safeMax(dataDancho);
 
       // === Dernière séance complète par utilisateur sur cet exercice ===
       function getLastSessionForExercise(user) {
@@ -3729,11 +3901,22 @@
 
         const oldStats = computeExercisePRStats(state.user, exerciseId);
 
+        let weightVal = Number(weight) || 0;
+
+        if (mode === "bodyweight" && weightVal <= 0) {
+          weightVal = getUserBodyweight(state.user);
+          if (weightVal <= 0) {
+            alert("⚠️ Renseigne ton poids utilisateur (en haut) pour utiliser 'Poids du corps'.");
+            return;
+          }
+        }
+
         state.logs.push({
+          id: makeRandomLogId(),
           user: state.user,
           date: state.date,
           exerciseId: exerciseId,
-          weight: Number(weight) || 0,
+          weight: weightVal,
           reps: Number(reps),
           rpe: rpe ? Number(rpe) : null,
           mode: mode
@@ -3798,6 +3981,9 @@
     renderHome();
     renderEntrainement();
     setupProfileInputs();
+
+    loadBodyweights();
+    if (bodyweightInput) bodyweightInput.value = getUserBodyweight(state.user) || "";
 
     // ========== PWA: Service Worker ==========
     if ('serviceWorker' in navigator) {
