@@ -2,7 +2,7 @@
   "name": "Muscle Boss Ultimate",
   "short_name": "Muscle Boss",
   "description": "Suivi d'entraînements, IPG, radar de performance et badges de progression.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#0f0c29",
   "theme_color": "#0f0c29",
@@ -17,5 +17,6 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "scope": "./"
 }

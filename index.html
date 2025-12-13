@@ -1312,7 +1312,7 @@
         box-shadow: 0 6px 16px rgba(27, 201, 199, 0.4);
       }
 
-      .day-btn:hover:not(.active) {
+      .day-btn:hover:not(.active)) {
         background: #1F2937;
       }
 
@@ -3745,6 +3745,13 @@
           // On re-render l'onglet entraînement
           renderEntrainement();
 
+          // 🔄 Sync des autres vues (Home / Historique / Progression / Stats)
+          // Important : sinon tu ajoutes une série mais tu ne vois pas la séance partout tout de suite.
+          renderHome();
+          renderHistory();
+          renderProgression();
+          renderStatistics();
+
           // PR "après" la nouvelle série
           const newStats = computeExercisePRStats(state.user, exerciseId);
           const prMessages = buildPRMessages(oldStats, newStats);
@@ -3773,6 +3780,10 @@
             state.logs.splice(index, 1);
             saveState();
             renderEntrainement();
+            renderHome();
+            renderHistory();
+            renderProgression();
+            renderStatistics();
           }
         };
 
@@ -3786,39 +3797,16 @@
     renderEntrainement();
     setupProfileInputs();
 
-    // ========== PWA: Service Worker (auto-update propre) ==========
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", async () => {
-        try {
-          const reg = await navigator.serviceWorker.register("./service-worker.js");
-
-          // Si une nouvelle version est en attente, on l’active tout de suite
-          if (reg.waiting) {
-            reg.waiting.postMessage({ type: "SKIP_WAITING" });
-          }
-
-          // Quand un nouveau SW est trouvé
-          reg.addEventListener("updatefound", () => {
-            const newWorker = reg.installing;
-            if (!newWorker) return;
-
-            newWorker.addEventListener("statechange", () => {
-              if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
-                // Nouvelle version prête -> on recharge pour être sûr d’être sur la bonne
-                window.location.reload();
-              }
-            });
+    // ========== PWA: Service Worker ==========
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(reg => {
+            console.log('Service Worker registered:', reg.scope);
+          })
+          .catch(err => {
+            console.error('Service Worker registration failed:', err);
           });
-
-          // Quand le contrôleur change (nouveau SW actif)
-          navigator.serviceWorker.addEventListener("controllerchange", () => {
-            window.location.reload();
-          });
-
-          console.log("Service Worker registered:", reg.scope);
-        } catch (err) {
-          console.error("Service Worker registration failed:", err);
-        }
       });
     }
   </script>
