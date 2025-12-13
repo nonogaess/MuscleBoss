@@ -1312,7 +1312,7 @@
         box-shadow: 0 6px 16px rgba(27, 201, 199, 0.4);
       }
 
-      .day-btn:hover:not(.active)) {
+      .day-btn:hover:not(.active) {
         background: #1F2937;
       }
 
@@ -3786,16 +3786,39 @@
     renderEntrainement();
     setupProfileInputs();
 
-    // ========== PWA: Service Worker ==========
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => {
-            console.log('Service Worker registered:', reg.scope);
-          })
-          .catch(err => {
-            console.error('Service Worker registration failed:', err);
+    // ========== PWA: Service Worker (auto-update propre) ==========
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          const reg = await navigator.serviceWorker.register("./service-worker.js");
+
+          // Si une nouvelle version est en attente, on l’active tout de suite
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: "SKIP_WAITING" });
+          }
+
+          // Quand un nouveau SW est trouvé
+          reg.addEventListener("updatefound", () => {
+            const newWorker = reg.installing;
+            if (!newWorker) return;
+
+            newWorker.addEventListener("statechange", () => {
+              if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                // Nouvelle version prête -> on recharge pour être sûr d’être sur la bonne
+                window.location.reload();
+              }
+            });
           });
+
+          // Quand le contrôleur change (nouveau SW actif)
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            window.location.reload();
+          });
+
+          console.log("Service Worker registered:", reg.scope);
+        } catch (err) {
+          console.error("Service Worker registration failed:", err);
+        }
       });
     }
   </script>

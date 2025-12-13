@@ -1,45 +1,74 @@
-const CACHE_NAME = 'muscle-boss-v2';
+// service-worker.js — MuscleBoss PWA (v3) — FIX DEFINITIF
+const VERSION = "v3";
+const CACHE_NAME = `muscle-boss-${VERSION}`;
+
 const CORE_ASSETS = [
-  './',
-  './index.html'
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./service-worker.js"
 ];
 
-// Installation : on met en cache le coeur de l'app
-self.addEventListener('install', (event) => {
+// INSTALL: on met en cache le minimum et on passe en attente
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(CORE_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
   );
 });
 
-// Activation : on nettoie les anciens caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      );
-    })
-  );
+// ACTIVATE: on supprime les vieux caches + on prend le contrôle tout de suite
+self.addEventListener("activate", (event) => {
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => (k !== CACHE_NAME ? caches.delete(k) : null)));
+    await self.clients.claim();
+  })());
 });
 
-// Fetch : stratégie cache d'abord, sinon réseau, sinon fallback index.html
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+// MESSAGE: permet au client de forcer l’update (optionnel mais utile)
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
+// FETCH:
+// - Navigation (index.html) = NETWORK FIRST (évite les vieilles versions)
+// - Assets = CACHE FIRST (rapide)
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+
+  const req = event.request;
+
+  // IMPORTANT: pour les navigations, on veut toujours la version la plus récente
+  if (req.mode === "navigate") {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put("./index.html", fresh.clone());
+        return fresh;
+      } catch (e) {
+        const cached = await caches.match("./index.html");
+        return cached || Response.error();
       }
+    })());
+    return;
+  }
 
-      return fetch(event.request).catch(() => {
-        // Si offline et que la requête échoue, on renvoie la page principale
-        return caches.match('./index.html');
-      });
-    })
-  );
+  // Assets: cache-first
+  event.respondWith((async () => {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+
+    try {
+      const fresh = await fetch(req);
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(req, fresh.clone());
+      return fresh;
+    } catch (e) {
+      return cached || Response.error();
+    }
+  })());
 });
