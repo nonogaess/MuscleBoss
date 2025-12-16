@@ -1578,7 +1578,82 @@
         padding: 10px;
       }
 
-  </style>
+  
+    /* ====== DATA TOOLS (bulk delete / undo import) ====== */
+    .data-tools{
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+    }
+    .data-tools-title{
+      font-weight: 800;
+      color: var(--mb-text);
+      margin-bottom: 8px;
+    }
+    .data-tools-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 8px;
+    }
+    .data-tools-label{
+      color: var(--mb-text-muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+    .data-tools-user{
+      color: var(--mb-text);
+      font-weight: 900;
+      padding: 2px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.15);
+    }
+    .danger-btn{
+      flex: 1;
+      min-width: 220px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,107,107,0.45);
+      background: rgba(255,107,107,0.14);
+      color: var(--mb-text);
+      font-size: 0.9rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+    }
+    .danger-btn:hover{ transform: translateY(-1px); background: rgba(255,107,107,0.20); }
+    .danger-btn:disabled{ opacity: 0.45; cursor: not-allowed; transform: none; }
+    .data-tools-hint{
+      margin-top: 8px;
+      color: var(--mb-text-muted);
+      font-size: 0.85rem;
+      line-height: 1.35;
+    }
+
+    .history-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .history-delete{
+      background: rgba(255,107,107,0.12);
+      border: 1px solid rgba(255,107,107,0.35);
+      color: #ff6b6b;
+      cursor: pointer;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-weight: 900;
+      transition: transform 0.12s ease, background 0.12s ease;
+    }
+    .history-delete:hover{ transform: translateY(-1px); background: rgba(255,107,107,0.20); }
+
+</style>
 </head>
 <body>
   <div class="app">
@@ -1739,6 +1814,32 @@
       <button class="export-btn" id="exportBtn">💾 Exporter les données</button>
       <input type="file" id="importFile" accept="application/json" style="display:none" />
       <button class="export-btn" id="importBtn">📂 Importer des données</button>
+      <div class="data-tools">
+        <div class="data-tools-title">🧹 Nettoyage des données (sans supprimer série par série)</div>
+
+        <div class="data-tools-row">
+          <span class="data-tools-label">Utilisateur :</span>
+          <span class="data-tools-user" id="dataToolsUser"></span>
+        </div>
+
+        <div class="data-tools-row">
+          <label class="data-tools-label" for="deleteFrom">Du</label>
+          <input type="date" id="deleteFrom" />
+          <label class="data-tools-label" for="deleteTo">au</label>
+          <input type="date" id="deleteTo" />
+        </div>
+
+        <div class="data-tools-row">
+          <button class="danger-btn" id="deleteRangeBtn">🗑️ Supprimer la plage (utilisateur courant)</button>
+          <button class="danger-btn" id="undoImportBtn">↩️ Annuler le dernier import</button>
+          <button class="danger-btn" id="wipeAllBtn">🔥 Tout réinitialiser</button>
+        </div>
+
+        <div class="data-tools-hint">
+          Astuce : tu peux aussi supprimer une séance complète directement dans la liste d'historique (icône 🗑️ à droite de la date).
+        </div>
+      </div>
+
     </div>
 
     <!-- SECTION PROGRESSION -->
@@ -2048,7 +2149,8 @@
       date: new Date().toISOString().split("T")[0],
       currentDay: "A",
       fatigue: "normal",
-      logs: []
+      logs: [],
+      lastImportBatch: null
     };
 
     let currentView = "home";
@@ -2268,6 +2370,7 @@ function loadState() {
         state.date = parsed.date || state.date;
         state.fatigue = parsed.fatigue || state.fatigue;
         state.currentDay = parsed.currentDay || state.currentDay;
+        state.lastImportBatch = parsed.lastImportBatch || state.lastImportBatch || null;
       } catch (e) {
         console.warn("⚠️ muscleAppState corrompu : reset safe.", e);
         // Reset "safe" sans casser l'app
@@ -2283,7 +2386,8 @@ function loadState() {
           user: state.user,
           date: state.date,
           fatigue: state.fatigue,
-          currentDay: state.currentDay
+          currentDay: state.currentDay,
+          lastImportBatch: state.lastImportBatch
         })
       );
     }
@@ -2379,17 +2483,10 @@ function loadState() {
     function getLogMode(log) {
       if (log.mode) return log.mode;
 
+      // Si pas de mode dans le log (ancienne version),
+      // on prend le recommendedMode de l'exercice (programme OU custom), sinon "total".
       const def = getExerciseDefinition(log.exerciseId);
-      const rec = (def && def.recommendedMode) ? def.recommendedMode : "total";
-      const w = Number(log.weight) || 0;
-
-      // ✅ Règle “legacy safe” :
-      // - si l'ancien log avait un poids > 0, on suppose qu'il a été entré en "charge totale"
-      //   (sinon ça double et ça fausse tes stats, surtout pour les exos "par bras").
-      // - exception : si poids = 0 et que l'exo est "virtual" ou "bodyweight", on garde le mode recommandé.
-      if (w === 0 && (rec === "virtual" || rec === "bodyweight")) return rec;
-
-      return "total";
+      return (def && def.recommendedMode) ? def.recommendedMode : "total";
     }
 
 
@@ -2529,6 +2626,8 @@ function loadState() {
       renderStatistics();
       renderProgression();
       renderHome();
+      renderHistory();
+      updateDataToolsUI();
       updateTheme();
     });
 
@@ -2600,24 +2699,43 @@ function loadState() {
             return;
           }
 
-          // 1) Normalisation + IDs stables (conserve les séries identiques)
-          const importedLogs = assignStableIdsToLogs(json.logs);
+          // 1) Normalisation + IDs (conserve les séries identiques)
+          //    + "batch" pour pouvoir annuler un import en 1 clic
+          const batchId = "IMP-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
+          const importedLogs = assignStableIdsToLogs(json.logs).map(l => ({
+            ...l,
+            importBatch: l.importBatch || batchId
+          }));
 
           // 2) On s'assure que les logs existants ont des IDs
           state.logs = assignStableIdsToLogs(state.logs);
 
-          // 3) Fusion par ID (si même ID => on remplace, sinon on ajoute)
+          // 3) Fusion par ID, MAIS collision-safe :
+          //    si un ID existe déjà avec un contenu différent, on régénère un ID pour éviter d'écraser tes séries.
           const map = new Map();
           state.logs.forEach(l => map.set(l.id, l));
-          importedLogs.forEach(l => map.set(l.id, l));
+
+          importedLogs.forEach(l => {
+            if (map.has(l.id)) {
+              const existing = map.get(l.id);
+              if (makeContentKey(existing) !== makeContentKey(l)) {
+                l.id = makeRandomLogId();
+              }
+            }
+            map.set(l.id, l);
+          });
 
           state.logs = Array.from(map.values());
+          state.lastImportBatch = batchId;
 
           saveState();
           renderEntrainement();
+          renderLibre();
+          renderHome();
           renderHistory();
           renderStatistics();
           renderProgression();
+          updateDataToolsUI();
 
           alert("✅ Import terminé (fusion des données réussie).");
         } catch (err) {
@@ -3916,13 +4034,15 @@ function loadState() {
     function renderHistory() {
       historyList.innerHTML = "";
 
-      if (state.logs.length === 0) {
-        historyList.innerHTML = '<div style="text-align:center; color:#9ca3af;">Aucun historique disponible</div>';
+      const visibleLogs = state.logs.filter(l => l.user === state.user);
+
+      if (visibleLogs.length === 0) {
+        historyList.innerHTML = `<div style="text-align:center; color:#9ca3af;">Aucun historique disponible pour <strong>${state.user}</strong></div>`;
         return;
       }
 
       const groupedByDate = {};
-      state.logs.forEach(log => {
+      visibleLogs.forEach(log => {
         if (!groupedByDate[log.date]) {
           groupedByDate[log.date] = [];
         }
@@ -3959,7 +4079,10 @@ function loadState() {
         });
 
         item.innerHTML = `
-          <div class="history-date">${new Date(date).toLocaleDateString('fr-FR')}</div>
+          <div class="history-header">
+            <div class="history-date">${new Date(date).toLocaleDateString('fr-FR')}</div>
+            <button class="history-delete" title="Supprimer cette séance (${state.user})" onclick="deleteSessionByDate('${date}')">🗑️</button>
+          </div>
           ${exercisesList}
         `;
         
@@ -4760,6 +4883,121 @@ function loadState() {
           }
         };
 
+    
+        // ====== DATA TOOLS (bulk delete / undo import) ======
+        function updateDataToolsUI() {
+          const userEl = document.getElementById("dataToolsUser");
+          if (userEl) userEl.textContent = state.user;
+
+          const undoBtn = document.getElementById("undoImportBtn");
+          if (undoBtn) undoBtn.disabled = !state.lastImportBatch;
+        }
+
+        window.deleteSessionByDate = function(dateStr) {
+          const d = String(dateStr || "");
+          if (!d) return;
+          const ok = confirm(`Supprimer TOUTES les séries du ${new Date(d).toLocaleDateString('fr-FR')} pour ${state.user} ?`);
+          if (!ok) return;
+
+          state.logs = state.logs.filter(l => !(l.user === state.user && l.date === d));
+          saveState();
+          renderEntrainement();
+          renderLibre();
+          renderHome();
+          renderHistory();
+          renderProgression();
+          renderStatistics();
+          updateDataToolsUI();
+        };
+
+        function deleteSessionsRange(fromStr, toStr) {
+          const from = String(fromStr || "");
+          const to = String(toStr || "");
+          if (!from || !to) {
+            alert("⚠️ Choisis une date de début ET une date de fin.");
+            return;
+          }
+
+          const a = from <= to ? from : to;
+          const b = from <= to ? to : from;
+
+          const ok = confirm(`Supprimer toutes les séries de ${state.user} du ${new Date(a).toLocaleDateString('fr-FR')} au ${new Date(b).toLocaleDateString('fr-FR')} ?`);
+          if (!ok) return;
+
+          state.logs = state.logs.filter(l => !(l.user === state.user && l.date >= a && l.date <= b));
+          saveState();
+          renderEntrainement();
+          renderLibre();
+          renderHome();
+          renderHistory();
+          renderProgression();
+          renderStatistics();
+          updateDataToolsUI();
+        }
+
+        function undoLastImport() {
+          if (!state.lastImportBatch) {
+            alert("ℹ️ Aucun import récent à annuler.");
+            return;
+          }
+
+          const ok = confirm("Annuler le dernier import ? (toutes les séries importées dans le dernier fichier seront supprimées)");
+          if (!ok) return;
+
+          const batch = state.lastImportBatch;
+          state.logs = state.logs.filter(l => l.importBatch !== batch);
+          state.lastImportBatch = null;
+
+          saveState();
+          renderEntrainement();
+          renderLibre();
+          renderHome();
+          renderHistory();
+          renderProgression();
+          renderStatistics();
+          updateDataToolsUI();
+        }
+
+        function wipeAllData() {
+          const ok = confirm("⚠️ Tout réinitialiser ?\n\nCela supprime : séances, historique, profils et exercices libres.\n(À faire seulement si tu as exporté un backup.)");
+          if (!ok) return;
+
+          try {
+            localStorage.removeItem("muscleAppState");
+            localStorage.removeItem("musclePlayerProfile");
+            localStorage.removeItem("muscleBodyweightByUser");
+            localStorage.removeItem(CUSTOM_EX_KEY);
+            localStorage.removeItem(CUSTOM_EX_SELECTED_KEY);
+          } catch (e) {}
+
+          location.reload();
+        }
+
+        function bindDataTools() {
+          const delBtn = document.getElementById("deleteRangeBtn");
+          const undoBtn = document.getElementById("undoImportBtn");
+          const wipeBtn = document.getElementById("wipeAllBtn");
+
+          if (delBtn) {
+            delBtn.addEventListener("click", () => {
+              const from = document.getElementById("deleteFrom")?.value;
+              const to = document.getElementById("deleteTo")?.value;
+              deleteSessionsRange(from, to);
+            });
+          }
+
+          if (undoBtn) {
+            undoBtn.addEventListener("click", () => undoLastImport());
+          }
+
+          if (wipeBtn) {
+            wipeBtn.addEventListener("click", () => wipeAllData());
+          }
+
+          updateDataToolsUI();
+        }
+
+
     // ========== INIT ==========
     loadState();
     loadPlayerProfile();
@@ -4771,6 +5009,7 @@ function loadState() {
     renderHome();
     renderEntrainement();
     setupProfileInputs();
+    bindDataTools();
 
     loadBodyweights();
     if (bodyweightInput) bodyweightInput.value = getUserBodyweight(state.user) || "";
