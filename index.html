@@ -2379,10 +2379,17 @@ function loadState() {
     function getLogMode(log) {
       if (log.mode) return log.mode;
 
-      // Si pas de mode dans le log (ancienne version),
-      // on prend le recommendedMode de l'exercice (programme OU custom), sinon "total".
       const def = getExerciseDefinition(log.exerciseId);
-      return (def && def.recommendedMode) ? def.recommendedMode : "total";
+      const rec = (def && def.recommendedMode) ? def.recommendedMode : "total";
+      const w = Number(log.weight) || 0;
+
+      // ✅ Règle “legacy safe” :
+      // - si l'ancien log avait un poids > 0, on suppose qu'il a été entré en "charge totale"
+      //   (sinon ça double et ça fausse tes stats, surtout pour les exos "par bras").
+      // - exception : si poids = 0 et que l'exo est "virtual" ou "bodyweight", on garde le mode recommandé.
+      if (w === 0 && (rec === "virtual" || rec === "bodyweight")) return rec;
+
+      return "total";
     }
 
 
