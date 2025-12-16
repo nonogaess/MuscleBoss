@@ -11,6 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -675,7 +676,7 @@
     .fifa-card {
       flex: 0 0 auto;
 
-      width: min(92vw, 300px);
+      width: min(92vw, 360px);
       aspect-ratio: 3 / 4;
       height: auto;
       margin: 0 auto;
@@ -685,10 +686,10 @@
 
       /* Réglages faciles à tuner */
       --photo-size: clamp(220px, 60%, 310px); /* + grand */
-      --photo-top: 43%;                       /* plus centré verticalement */
+      --photo-top: 40%;                       /* plus centré verticalement */
       --name-top: 70%;
       --flags-top: 76%;
-      --stats-bottom: 4%;                     /* stats plus basses */
+      --stats-bottom: 8%;                     /* stats plus basses */
       --flags-offset: clamp(56px, 10vh, 90px); /* distance au-dessus des stats */
 
       border-radius: 15% 15% 60% 60%;
@@ -788,7 +789,7 @@
     .fifa-gen {
       position: absolute !important;
       top: 14px;
-      left: 8px !important;
+      left: 18px !important;
       z-index: 5;
       text-align: center;
     }
@@ -1096,7 +1097,7 @@
     /* Si tu veux descendre encore + sur mobile */
     @media (max-width: 420px) {
       .fifa-card {
-        --stats-bottom: 16%;
+        --stats-bottom: 8%;
         --photo-top: 45%;
       }
     }
@@ -1175,7 +1176,7 @@
 
     /* ✅ Remonter légèrement la zone des stats (évite PEC/BIC coupés) */
     .fifa-card{
-      --stats-bottom: 14%;   /* ⬅️ avant: 8% / 12% → teste 14% puis 16% si besoin */
+      --stats-bottom: 8%;   /* ⬅️ avant: 8% / 12% → teste 14% puis 16% si besoin */
       --flags-offset: clamp(54px, 9vh, 86px);
     }
 
@@ -1185,6 +1186,10 @@
       transform: translateX(-50%) !important;
       width: 84% !important;
       bottom: var(--stats-bottom) !important;
+      background: rgba(0,0,0,0.18);
+      backdrop-filter: blur(3px);
+      border-radius: 14px;
+      padding: 8px 10px;
     }
 
     /* France • Club calé au-dessus des stats */
@@ -1201,12 +1206,12 @@
 
     /* Mobile : on remonte un chouïa moins (sinon ça bouffe la place) */
     @media (max-width: 420px){
-      .fifa-card{ --stats-bottom: 12%; }
+      .fifa-card{ --stats-bottom: 8%; }
     }
 
     /* ✅ Séparer clairement : Nom / France-Club / Stats */
     .fifa-card{
-      --stats-bottom: 14%;
+      --stats-bottom: 8%;
       --flags-offset: clamp(78px, 12vh, 110px); /* + haut que maintenant */
       --name-offset:  clamp(102px, 15vh, 140px);
       --divider-offset: 58px; /* position de la ligne blanche au-dessus des stats */
@@ -1221,6 +1226,7 @@
       margin: 0 !important;
       width: 90%;
       text-align: center;
+      display: none !important;
     }
 
     /* France • Club entre le nom et les stats */
@@ -1246,6 +1252,20 @@
     /* Stats restent en bas */
     .fifa-stats{ z-index: 5; }
     .fifa-name, .fifa-flags{ z-index: 6; }
+
+    .fifa-flags{
+      color: rgba(255,255,255,0.92) !important; /* plus clair */
+      font-weight: 700;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    }
+
+    /* Le point séparateur */
+    .fifa-flags span:nth-child(2){
+      opacity: 0.55;
+    }
+
+    /* Le club un poil plus “accentué” */
+    .fifa-flags span:last-child{ color: #f4d582 !important; }
 
     /* =========================================================
         THEME UNIFIE MUSCLE BOSS
@@ -3035,6 +3055,111 @@ function loadState() {
           detailsGrid.innerHTML = htmlDetails;
         }
 
+        function loadImageFromFile(file) {
+          return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+            img.onerror = reject;
+            img.src = url;
+          });
+        }
+
+        async function removeBgAndAutoCrop(file, opts = {}) {
+          const {
+            maxSide = 900,        // baisse à 700 si iPhone galère
+            alphaThreshold = 25,  // sensibilité du détourage
+            pad = 0.12            // marge autour du sujet
+          } = opts;
+
+          if (typeof SelfieSegmentation === "undefined") {
+            throw new Error("SelfieSegmentation non chargé");
+          }
+
+          const img = await loadImageFromFile(file);
+
+          // downscale pour perf
+          const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+          const w = Math.max(1, Math.round(img.naturalWidth * scale));
+          const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
+          const inputCanvas = document.createElement("canvas");
+          inputCanvas.width = w; inputCanvas.height = h;
+          const ictx = inputCanvas.getContext("2d");
+          ictx.drawImage(img, 0, 0, w, h);
+
+          const outCanvas = document.createElement("canvas");
+          outCanvas.width = w; outCanvas.height = h;
+          const ctx = outCanvas.getContext("2d");
+
+          const seg = new SelfieSegmentation({
+            locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`
+          });
+          seg.setOptions({ modelSelection: 1 });
+
+          await new Promise((resolve) => {
+            seg.onResults((res) => {
+              ctx.clearRect(0, 0, w, h);
+
+              // masque
+              ctx.drawImage(res.segmentationMask, 0, 0, w, h);
+
+              // garde seulement le sujet
+              ctx.globalCompositeOperation = "source-in";
+              ctx.drawImage(inputCanvas, 0, 0, w, h);
+              ctx.globalCompositeOperation = "source-over";
+
+              resolve();
+            });
+
+            seg.send({ image: inputCanvas });
+          });
+
+          // Auto-crop basé sur alpha
+          const data = ctx.getImageData(0, 0, w, h).data;
+          let minX = w, minY = h, maxX = -1, maxY = -1;
+
+          const step = 2; // perf
+          for (let y = 0; y < h; y += step) {
+            for (let x = 0; x < w; x += step) {
+              const a = data[(y * w + x) * 4 + 3];
+              if (a > alphaThreshold) {
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (x > maxX) maxX = x;
+                if (y > maxY) maxY = y;
+              }
+            }
+          }
+
+          // si rien détecté, renvoie tel quel
+          if (maxX < 0) return outCanvas.toDataURL("image/png");
+
+          const bw = (maxX - minX + 1);
+          const bh = (maxY - minY + 1);
+          const px = Math.round(bw * pad);
+          const py = Math.round(bh * pad);
+
+          const cx = Math.max(0, minX - px);
+          const cy = Math.max(0, minY - py);
+          const cw = Math.min(w - cx, bw + 2 * px);
+          const ch = Math.min(h - cy, bh + 2 * py);
+
+          const crop = document.createElement("canvas");
+          crop.width = cw; crop.height = ch;
+          crop.getContext("2d").drawImage(outCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
+
+          // mettre en carré (transparent) pour que ça rende bien dans ta carte
+          const side = Math.max(cw, ch);
+          const sq = document.createElement("canvas");
+          sq.width = side; sq.height = side;
+          const sctx = sq.getContext("2d");
+          sctx.clearRect(0, 0, side, side);
+          sctx.drawImage(crop, (side - cw) / 2, (side - ch) / 2);
+
+          return sq.toDataURL("image/png");
+        }
+
         function setupProfileInputs() {
           const nameInput = document.getElementById("profileNameInput");
           const flagInput = document.getElementById("profileFlagInput");
@@ -3069,16 +3194,26 @@ function loadState() {
             renderFifaCard();
           });
 
-          photoInput.addEventListener("change", e => {
+          photoInput.addEventListener("change", async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            const reader = new FileReader();
-            reader.onload = ev => {
-              playerProfile.photoDataUrl = ev.target.result;
+
+            try {
+              // ✅ background removed + auto-crop
+              const pngTransparent = await removeBgAndAutoCrop(file, { maxSide: 900 });
+              playerProfile.photoDataUrl = pngTransparent;
               savePlayerProfile();
               renderFifaCard();
-            };
-            reader.readAsDataURL(file);
+            } catch (err) {
+              // fallback : garde la photo normale
+              const reader = new FileReader();
+              reader.onload = ev => {
+                playerProfile.photoDataUrl = ev.target.result;
+                savePlayerProfile();
+                renderFifaCard();
+              };
+              reader.readAsDataURL(file);
+            }
           });
 
           if (detailsBtn && detailsPanel && detailsClose) {
