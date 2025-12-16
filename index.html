@@ -635,7 +635,7 @@
       }
     }
 
-        /* PR & SUGGESTIONS */
+    /* PR & SUGGESTIONS */
     .pr-flags {
       margin-top: 4px;
       font-size: 0.75rem;
@@ -673,11 +673,24 @@
     }
 
     .fifa-card {
-      flex: 1;
+      flex: 0 0 auto;
+
+      width: min(92vw, 300px);
+      aspect-ratio: 3 / 4;
+      height: auto;
+      margin: 0 auto;
+
       position: relative;
       padding: 16px 14px 12px;
-      
-      /* Forme FIFA emblématique avec découpe supérieure et inférieure */
+
+      /* Réglages faciles à tuner */
+      --photo-size: clamp(220px, 60%, 310px); /* + grand */
+      --photo-top: 43%;                       /* plus centré verticalement */
+      --name-top: 70%;
+      --flags-top: 76%;
+      --stats-bottom: 4%;                     /* stats plus basses */
+      --flags-offset: clamp(56px, 10vh, 90px); /* distance au-dessus des stats */
+
       border-radius: 15% 15% 60% 60%;
       clip-path: polygon(
         0% 10%,
@@ -689,11 +702,10 @@
         10% 100%,
         0% 90%
       );
-      
-      /* Gradient doré FIFA exact */
-      background: 
+
+      background:
         radial-gradient(ellipse at top center, rgba(255, 255, 255, 0.3) 0%, transparent 50%),
-        linear-gradient(135deg, 
+        linear-gradient(135deg,
           #a2a2a0 0%,
           #a7a5a1 20%,
           #8a8983 40%,
@@ -701,13 +713,13 @@
           #686867 80%,
           #3d3b36 100%
         );
-      
+
       box-shadow:
         0 20px 45px rgba(55, 54, 54, 0.8),
         0 8px 20px rgba(55, 54, 54, 0.5),
         inset 0 2px 8px rgba(255,255,255,0.4),
         inset 0 -2px 8px rgba(43, 42, 42, 0.2);
-      
+
       border: none;
       overflow: hidden;
       transition: transform 0.3s ease;
@@ -764,18 +776,21 @@
     }
 
     .fifa-card-header {
-      display: flex;
+      display: block !important;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 2px;
-      position: relative;
+      margin-bottom: 0 !important;
+      position: static !important;
       z-index: 2;
     }
 
     /* Rating et position (en haut à gauche) */
     .fifa-gen {
+      position: absolute !important;
+      top: 14px;
+      left: 8px !important;
+      z-index: 5;
       text-align: center;
-      position: relative;
     }
 
     .fifa-gen-label {
@@ -814,15 +829,18 @@
 
     /* Photo du joueur - grande et centrée */
     .fifa-photo {
-      width: 100px;
-      height: 100px;
-      border-radius: 0;
+      position: absolute !important;
+      left: 50% !important;
+      top: var(--photo-top) !important;
+      transform: translate(-50%, -50%) !important;
+
+      width: var(--photo-size) !important;
+      height: var(--photo-size) !important;
+      z-index: 5;
+
+      border-radius: 14px !important;
       overflow: hidden;
-      margin: 8px auto 4px;
-      border: none;
-      background: transparent;
-      position: relative;
-      z-index: 2;
+      margin: 0 !important;
     }
 
     .fifa-photo img {
@@ -844,20 +862,14 @@
 
     /* Nom du joueur - sous la photo */
     .fifa-name {
-      margin-top: 2px;
-      margin-bottom: 6px;
-      font-weight: 900;
-      font-size: 1.1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.01em;
-      color: #fffbfb;
-      text-shadow: 
-        0 1px 0 rgba(229, 229, 207, 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.25);
+      position: absolute !important;
+      left: 50% !important;
+      top: var(--name-top) !important;
+      transform: translateX(-50%) !important;
+      z-index: 5;
+      margin: 0 !important;
+      width: 90%;
       text-align: center;
-      font-family: 'Arial Black', sans-serif;
-      position: relative;
-      z-index: 2;
     }
 
     /* Stats FIFA - Format horizontal 6 colonnes comme sur l'image */
@@ -869,8 +881,13 @@
       grid-template-columns: repeat(6, 1fr); /* 6 colonnes PEC–BIC */
       gap: 4px 2px;
       font-size: 0.7rem;
-      position: relative;
-      z-index: 2;
+      position: absolute !important;
+      left: 50% !important;
+      bottom: var(--stats-bottom) !important;
+      transform: translateX(-50%) !important;
+      z-index: 5;
+      width: 92% !important;
+      margin: 0 !important;
     }
 
     /* ABD & CAR centrés sous JAM / EPA */
@@ -921,14 +938,15 @@
 
     /* Drapeaux et logos - en bas */
     .fifa-flags {
-      display: flex;
-      align-items: center;
+      position: absolute !important;
+      left: 50% !important;
+      top: auto !important;
+      bottom: calc(var(--stats-bottom) + var(--flags-offset)) !important;
+      transform: translateX(-50%) !important;
+      z-index: 5;
+      margin: 0 !important;
+      width: 90%;
       justify-content: center;
-      gap: 8px;
-      font-size: 1rem;
-      margin-top: 6px;
-      position: relative;
-      z-index: 2;
     }
 
     .fifa-card-placeholder {
@@ -1074,6 +1092,14 @@
       color: #f9fafb;
       font-size: 0.8rem;
     }
+    
+    /* Si tu veux descendre encore + sur mobile */
+    @media (max-width: 420px) {
+      .fifa-card {
+        --stats-bottom: 16%;
+        --photo-top: 45%;
+      }
+    }
 
     /* BADGES - Style amélioré */
     .badge-item {
@@ -1125,6 +1151,101 @@
       backdrop-filter: blur(15px);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
     }
+
+    /* Donne une marge intérieure pour éviter d’être mangé par le clip-path */
+    .fifa-stats,
+    .fifa-flags{
+      width: 84% !important;          /* au lieu de 92% */
+      padding-inline: 10px !important; /* marge interne */
+      left: 50% !important;
+      right: auto !important;
+      transform: translateX(-50%) !important;
+    }
+
+    /* Espace entre les colonnes + centrage propre */
+    .fifa-stats-grid{
+      column-gap: 12px;
+      justify-items: center;
+    }
+
+    /* Bonus lisibilité (optionnel) */
+    .fifa-stat-label, .fifa-stat-value, .fifa-flags{
+      text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    }
+
+    /* ✅ Remonter légèrement la zone des stats (évite PEC/BIC coupés) */
+    .fifa-card{
+      --stats-bottom: 14%;   /* ⬅️ avant: 8% / 12% → teste 14% puis 16% si besoin */
+      --flags-offset: clamp(54px, 9vh, 86px);
+    }
+
+    /* On garde les stats centrées et avec marge “safe” */
+    .fifa-stats{
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: 84% !important;
+      bottom: var(--stats-bottom) !important;
+    }
+
+    /* France • Club calé au-dessus des stats */
+    .fifa-flags{
+      top: auto !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: 84% !important;
+      bottom: calc(var(--stats-bottom) + var(--flags-offset)) !important;
+    }
+
+    /* Un peu d’air entre colonnes */
+    .fifa-stats-grid{ column-gap: 12px; justify-items: center; }
+
+    /* Mobile : on remonte un chouïa moins (sinon ça bouffe la place) */
+    @media (max-width: 420px){
+      .fifa-card{ --stats-bottom: 12%; }
+    }
+
+    /* ✅ Séparer clairement : Nom / France-Club / Stats */
+    .fifa-card{
+      --stats-bottom: 14%;
+      --flags-offset: clamp(78px, 12vh, 110px); /* + haut que maintenant */
+      --name-offset:  clamp(102px, 15vh, 140px);
+      --divider-offset: 58px; /* position de la ligne blanche au-dessus des stats */
+    }
+
+    /* NOM au-dessus de France/Club */
+    .fifa-name{
+      top: auto !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      bottom: calc(var(--stats-bottom) + var(--name-offset)) !important;
+      margin: 0 !important;
+      width: 90%;
+      text-align: center;
+    }
+
+    /* France • Club entre le nom et les stats */
+    .fifa-flags{
+      top: auto !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      bottom: calc(var(--stats-bottom) + var(--flags-offset)) !important;
+      width: 84% !important;
+      margin: 0 !important;
+    }
+
+    /* La ligne blanche : elle ne doit PAS passer sur le texte */
+    .fifa-divider{
+      position: absolute !important;
+      left: 8% !important;
+      right: 8% !important;
+      bottom: calc(var(--stats-bottom) + var(--divider-offset)) !important;
+      margin: 0 !important;
+      z-index: 4;
+    }
+
+    /* Stats restent en bas */
+    .fifa-stats{ z-index: 5; }
+    .fifa-name, .fifa-flags{ z-index: 6; }
 
     /* =========================================================
         THEME UNIFIE MUSCLE BOSS
@@ -2852,9 +2973,6 @@ function loadState() {
                 <div class="fifa-gen-label">GEN</div>
                 <div class="fifa-gen-value">${stats.GEN}</div>
                 <div class="fifa-meta">${currentUser}</div>
-                <div class="fifa-meta" style="font-size:0.7rem; opacity:0.8;">
-                  IPG: ${ipgData.ipg.toFixed(0)} · Séances: ${ipgData.sessions}
-                </div>
               </div>
               <div>
                 <div class="fifa-photo">${photoHtml}</div>
