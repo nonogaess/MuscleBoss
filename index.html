@@ -1453,6 +1453,7 @@
       <button class="top-tab-btn" data-tab="statistiques">Statistiques</button>
       <button class="top-tab-btn" data-tab="historique">Historique</button>
       <button class="top-tab-btn" data-tab="progression">Progression</button>
+      <button class="top-tab-btn" data-tab="exerciceLibre">Exercice libre</button>
     </div>
 
     <!-- SECTION ACCUEIL / DASHBOARD -->
@@ -1557,6 +1558,26 @@
 
       <div id="exercisesContainer"></div>
       <div class="summary" id="summaryEl"></div>
+    </div>
+
+
+    <!-- SECTION EXERCICE LIBRE -->
+    <div class="content-section" id="exerciceLibre">
+      <h2 class="section-title">➕ Exercice libre</h2>
+      <div class="subtext" style="margin-bottom:10px;">
+        Ajoute un exercice hors programme (ou crée le tien), puis enregistre tes séries comme d’habitude.
+      </div>
+
+      <div class="controls">
+        <div class="control-row" style="flex:1;">
+          <label>Exercice</label>
+          <select id="freeExerciseSelect"></select>
+        </div>
+      </div>
+
+      <div id="freeCreatePanel"></div>
+      <div id="freeExerciseCardHost"></div>
+      <div class="summary" id="freeSummaryEl"></div>
     </div>
 
     <!-- SECTION STATISTIQUES -->
@@ -1953,6 +1974,79 @@
       saveBodyweights();
     }
 
+
+    // ====== EXERCICES PERSONNALISÉS (Exercice libre) ======
+    const CUSTOM_EX_KEY = "muscleCustomExercises";
+    const CUSTOM_EX_SELECTED_KEY = "muscleSelectedFreeExerciseId";
+
+    const ALL_MUSCLES = ["Pecs","Dos","Quadriceps","Ischios","Épaules","Biceps","Triceps","Abdos","Cardio"];
+    let customExercises = [];               // {id,name,muscle,recommendedMode,gifUrl?,refMax?}
+    let selectedFreeExerciseId = null;
+
+    function loadCustomExercises() {
+      const raw = localStorage.getItem(CUSTOM_EX_KEY);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          customExercises = Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+          console.warn("Exercices personnalisés invalides, reset.");
+          customExercises = [];
+        }
+      }
+      // Nettoyage / normalisation
+      customExercises = (customExercises || [])
+        .filter(ex => ex && ex.id && ex.name && ex.muscle)
+        .map(ex => ({
+          id: String(ex.id),
+          name: String(ex.name),
+          muscle: String(ex.muscle),
+          recommendedMode: ex.recommendedMode || "total",
+          gifUrl: ex.gifUrl || null,
+          refMax: ex.refMax || null
+        }));
+
+      // Injecter dans le mapping muscle
+      customExercises.forEach(ex => {
+        exerciseToMuscle[ex.id] = ex.muscle;
+      });
+
+      // Restaurer le dernier exercice sélectionné
+      const sel = localStorage.getItem(CUSTOM_EX_SELECTED_KEY);
+      if (sel) selectedFreeExerciseId = sel;
+    }
+
+    function saveCustomExercises() {
+      localStorage.setItem(CUSTOM_EX_KEY, JSON.stringify(customExercises));
+    }
+
+    function saveSelectedFreeExerciseId(id) {
+      selectedFreeExerciseId = id;
+      if (id) localStorage.setItem(CUSTOM_EX_SELECTED_KEY, id);
+      else localStorage.removeItem(CUSTOM_EX_SELECTED_KEY);
+    }
+
+    function slugifyId(name) {
+      const base = String(name || "")
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .slice(0, 40);
+      return base || "custom_ex";
+    }
+
+    function makeUniqueExerciseId(baseId) {
+      let id = baseId;
+      let i = 2;
+      while (getExerciseDefinition(id)) {
+        id = `${baseId}_${i}`;
+        i++;
+      }
+      return id;
+    }
+
+
     // ========== HELPERS ==========
     
     // ===== IDs stables pour éviter la suppression de séries identiques =====
@@ -2145,18 +2239,11 @@ function loadState() {
       if (log.mode) return log.mode;
 
       // Si pas de mode dans le log (ancienne version),
-      // on essaie de tomber sur le recommendedMode de l'exercice, sinon "total".
-      let recommended = null;
-      Object.values(program).forEach(day => {
-        day.exercises.forEach(ex => {
-          if (ex.id === log.exerciseId && ex.recommendedMode) {
-            recommended = ex.recommendedMode;
-          }
-        });
-      });
-
-      return recommended || "total";
+      // on prend le recommendedMode de l'exercice (programme OU custom), sinon "total".
+      const def = getExerciseDefinition(log.exerciseId);
+      return (def && def.recommendedMode) ? def.recommendedMode : "total";
     }
+
 
     // Poids effectif pour tout ce qui est "volume" (tonnage, IPG, etc.)
     function getEffectiveWeightForVolume(log) {
@@ -2240,6 +2327,12 @@ function loadState() {
     const fatigueSelect = document.getElementById("fatigueSelect");
     const bodyweightInput = document.getElementById("bodyweightInput");
 
+    // Exercice libre
+    const freeExerciseSelect = document.getElementById("freeExerciseSelect");
+    const freeCreatePanel = document.getElementById("freeCreatePanel");
+    const freeExerciseCardHost = document.getElementById("freeExerciseCardHost");
+    const freeSummaryEl = document.getElementById("freeSummaryEl");
+
     // ========== TAB SWITCHING ==========
     tabButtons.forEach(btn => {
       btn.addEventListener("click", () => {
@@ -2265,6 +2358,8 @@ function loadState() {
             renderHistory();
           } else if (targetTab === "progression") {
             renderProgression();
+          } else if (targetTab === "exerciceLibre") {
+            renderLibre();
           } else if (targetTab === "home") {
             renderHome();
           }
@@ -2282,6 +2377,7 @@ function loadState() {
       }
 
       renderEntrainement();
+      renderLibre();
       renderStatistics();
       renderProgression();
       renderHome();
@@ -2302,6 +2398,7 @@ function loadState() {
       state.date = e.target.value;
       saveState();
       renderEntrainement();
+      renderLibre();
       renderHome();
     });
 
@@ -2623,6 +2720,13 @@ function loadState() {
 
         // Récupérer la définition d'un exercice à partir de son id
         function getExerciseDefinition(exerciseId) {
+          // 1) Custom (exercice libre)
+          if (Array.isArray(customExercises)) {
+            const c = customExercises.find(ex => ex.id === exerciseId);
+            if (c) return c;
+          }
+
+          // 2) Programme
           for (const dayKey in program) {
             const day = program[dayKey];
             const found = day.exercises.find(ex => ex.id === exerciseId);
@@ -2993,6 +3097,433 @@ function loadState() {
       `;
     }
 
+
+
+    // ========== EXERCICE LIBRE ==========
+    function getAllExercisesFlat() {
+      const list = [];
+
+      // Custom d'abord
+      (customExercises || []).forEach(ex => list.push({ ...ex, _source: "custom" }));
+
+      // Puis programme (pour permettre de logger un exo même si hors séance du jour)
+      Object.values(program).forEach(day => {
+        (day.exercises || []).forEach(ex => {
+          if (!list.some(e => e.id === ex.id)) {
+            list.push({ ...ex, _source: "program" });
+          }
+        });
+      });
+
+      return list;
+    }
+
+    function populateFreeExerciseSelect() {
+      if (!freeExerciseSelect) return;
+
+      const all = getAllExercisesFlat();
+      const customs = all.filter(x => x._source === "custom");
+      const progs = all.filter(x => x._source === "program");
+
+      freeExerciseSelect.innerHTML = "";
+
+      const optCreate = document.createElement("option");
+      optCreate.value = "__create__";
+      optCreate.textContent = "➕ Créer un nouvel exercice…";
+      freeExerciseSelect.appendChild(optCreate);
+
+      if (customs.length > 0) {
+        const og = document.createElement("optgroup");
+        og.label = "Mes exercices (libre)";
+        customs.forEach(ex => {
+          const o = document.createElement("option");
+          o.value = ex.id;
+          o.textContent = ex.name;
+          og.appendChild(o);
+        });
+        freeExerciseSelect.appendChild(og);
+      }
+
+      const og2 = document.createElement("optgroup");
+      og2.label = "Exercices du programme";
+      progs.forEach(ex => {
+        const o = document.createElement("option");
+        o.value = ex.id;
+        o.textContent = ex.name;
+        og2.appendChild(o);
+      });
+      freeExerciseSelect.appendChild(og2);
+    }
+
+    function renderFreeCreatePanel() {
+      if (!freeCreatePanel) return;
+
+      const muscleOptions = ALL_MUSCLES.map(m => `<option value="${m}">${m}</option>`).join("");
+
+      freeCreatePanel.innerHTML = `
+        <div class="exercise-card" style="padding:14px;">
+          <div class="section-title" style="margin:0 0 8px 0; font-size:1rem;">Créer un exercice</div>
+
+          <div class="controls" style="margin-top:0;">
+            <div class="control-row" style="flex:2;">
+              <label>Nom</label>
+              <input id="newExName" type="text" placeholder="Ex: Pull-over poulie" />
+            </div>
+            <div class="control-row" style="flex:1;">
+              <label>Muscle</label>
+              <select id="newExMuscle">${muscleOptions}</select>
+            </div>
+          </div>
+
+          <div class="controls" style="margin-top:8px;">
+            <div class="control-row" style="flex:1;">
+              <label>Mode de poids par défaut</label>
+              <select id="newExMode">
+                <option value="total">Charge totale</option>
+                <option value="per_arm">Par bras</option>
+                <option value="bodyweight">Poids du corps</option>
+                <option value="virtual">Virtuel (abdos)</option>
+              </select>
+            </div>
+
+            <div class="control-row" style="flex:1;">
+              <label>Référence (optionnel)</label>
+              <input id="newExRefMax" type="number" placeholder="Ex: 60" />
+            </div>
+          </div>
+
+          <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+            <button class="add-set" style="margin:0;" onclick="createCustomExercise()">✅ Créer</button>
+            <button class="delete-btn" style="margin:0; padding:8px 10px;" onclick="cancelCreateCustomExercise()">Annuler</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFreeExerciseCard(ex) {
+      if (!freeExerciseCardHost) return;
+
+      // Logs du jour / user / exercice
+      const exerciseLogs = state.logs.filter(
+        l => l.user === state.user && l.date === state.date && l.exerciseId === ex.id
+      );
+
+      // Mode par défaut = dernier mode utilisé sur cet exo, sinon recommendedMode
+      let lastLogMode = null;
+      if (exerciseLogs.length > 0) {
+        const lastLog = exerciseLogs[exerciseLogs.length - 1];
+        if (lastLog.mode) lastLogMode = lastLog.mode;
+      }
+      const defaultMode = lastLogMode || ex.recommendedMode || "total";
+
+      let exerciseVolume = 0;
+      let totalSets = 0;
+      let totalReps = 0;
+
+      exerciseLogs.forEach(l => {
+        const effW = getEffectiveWeightForVolume(l);
+        const r = Number(l.reps) || 0;
+        exerciseVolume += effW * r;
+        totalSets++;
+        totalReps += r;
+      });
+
+      // UI
+      freeExerciseCardHost.innerHTML = "";
+
+      const card = document.createElement("div");
+      card.className = "exercise-card";
+
+      card.innerHTML = `
+        <div class="exercise-header">
+          <div class="exercise-name">${ex.name}</div>
+          <div class="tag">${ex.muscle || (exerciseToMuscle[ex.id] || "—")}</div>
+        </div>
+
+        <div class="subtext" style="margin-top:-4px; margin-bottom:8px;">
+          Exercice libre — tu peux logger même si ce n’est pas dans la séance du jour.
+        </div>
+
+        <!-- Sélecteur de mode (IDs séparés pour éviter les collisions avec l'onglet Entraînement) -->
+        <div class="subtext" style="margin-top:6px; margin-bottom:2px;">
+          <label for="mode-free-${ex.id}" style="font-size:0.8rem; color:#9ca3af;">
+            Poids à noter :
+          </label>
+          <select id="mode-free-${ex.id}" style="margin-left:6px; padding:2px 4px; font-size:0.8rem; border-radius:4px;">
+            <option value="total" ${defaultMode === "total" ? "selected" : ""}>Charge totale</option>
+            <option value="per_arm" ${defaultMode === "per_arm" ? "selected" : ""}>Par bras</option>
+            <option value="bodyweight" ${defaultMode === "bodyweight" ? "selected" : ""}>Poids du corps</option>
+            <option value="virtual" ${defaultMode === "virtual" ? "selected" : ""}>Virtuel (abdos)</option>
+          </select>
+        </div>
+
+        <div class="subtext" style="font-size:0.75rem; color:#6b7280; margin-bottom:10px;">
+          Mode recommandé : <strong>${getModeLabel(ex.recommendedMode || "total")}</strong> (modifiable).
+        </div>
+
+        <!-- Suggestion AVANT séance -->
+        <div class="suggestion">
+          ${buildPreSessionSuggestion(ex.id)}
+        </div>
+
+        <div class="logs">
+          ${exerciseLogs.length > 0 ? exerciseLogs.map((log, idx) => {
+            const globalIdx = state.logs.indexOf(log);
+            return `
+              <div class="log-item">
+                <span>${log.weight}kg × ${log.reps} reps${log.rpe ? ` (RPE ${log.rpe})` : ''}</span>
+                <button class="delete-btn" onclick="deleteLog(${globalIdx})">🗑️</button>
+              </div>
+            `;
+          }).join('') : '<div class="log-empty">Aucune série enregistrée</div>'}
+        </div>
+
+        <div class="log-form">
+          <div class="log-form-row">
+            <input type="number" placeholder="Poids (kg)" id="weight-free-${ex.id}" />
+            <input type="number" placeholder="Reps" id="reps-free-${ex.id}" />
+            <input type="number" placeholder="RPE (1-10)" id="rpe-free-${ex.id}" min="1" max="10" />
+          </div>
+          <button class="add-set" onclick="addFreeSet('${ex.id}')">➕ Ajouter série</button>
+        </div>
+
+        <div class="suggestion" id="suggestion-free-${ex.id}"></div>
+        <div class="pr-box" id="pr-free-${ex.id}" style="margin-top:10px;"></div>
+
+        ${(customExercises || []).some(c => c.id === ex.id) ? `
+          <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="delete-btn" style="padding:8px 10px;" onclick="deleteCustomExercise('${ex.id}')">🗑️ Supprimer cet exercice</button>
+          </div>
+        ` : ""}
+      `;
+
+      freeExerciseCardHost.appendChild(card);
+
+      if (freeSummaryEl) {
+        freeSummaryEl.innerHTML = `
+          <strong>Volume (exercice):</strong> ${exerciseVolume.toFixed(0)} kg · 
+          <strong>Séries:</strong> ${totalSets} · 
+          <strong>Répétitions:</strong> ${totalReps}
+        `;
+      }
+    }
+
+    function renderLibre() {
+      if (!freeExerciseSelect) return;
+
+      populateFreeExerciseSelect();
+
+      // Choix par défaut si rien
+      if (!selectedFreeExerciseId) {
+        if (customExercises && customExercises.length > 0) {
+          saveSelectedFreeExerciseId(customExercises[0].id);
+        } else {
+          saveSelectedFreeExerciseId("__create__");
+        }
+      }
+
+      // Si l'exercice sélectionné a été supprimé, fallback
+      if (selectedFreeExerciseId !== "__create__" && !getExerciseDefinition(selectedFreeExerciseId)) {
+        saveSelectedFreeExerciseId("__create__");
+      }
+
+      freeExerciseSelect.value = selectedFreeExerciseId || "__create__";
+
+      if (freeExerciseSelect.value === "__create__") {
+        renderFreeCreatePanel();
+        if (freeExerciseCardHost) freeExerciseCardHost.innerHTML = "";
+        if (freeSummaryEl) freeSummaryEl.innerHTML = "";
+        return;
+      }
+
+      // Sinon, on affiche la carte de log
+      if (freeCreatePanel) freeCreatePanel.innerHTML = "";
+      const ex = getExerciseDefinition(freeExerciseSelect.value);
+      if (!ex) {
+        if (freeExerciseCardHost) freeExerciseCardHost.innerHTML = `<div class="subtext">Exercice introuvable.</div>`;
+        return;
+      }
+
+      renderFreeExerciseCard(ex);
+    }
+
+    function setupFreeExerciseTab() {
+      if (!freeExerciseSelect) return;
+      // Eviter double-binding
+      if (freeExerciseSelect.dataset.bound === "1") return;
+      freeExerciseSelect.dataset.bound = "1";
+
+      freeExerciseSelect.addEventListener("change", (e) => {
+        const v = e.target.value;
+        saveSelectedFreeExerciseId(v);
+        renderLibre();
+      });
+    }
+
+    window.cancelCreateCustomExercise = function() {
+      // Retour sur le premier custom si dispo, sinon sur le programme
+      if (customExercises && customExercises.length > 0) {
+        saveSelectedFreeExerciseId(customExercises[0].id);
+      } else {
+        // fallback vers un exo du programme (ex: chest_press)
+        saveSelectedFreeExerciseId("chest_press");
+      }
+      renderLibre();
+    };
+
+    window.createCustomExercise = function() {
+      const nameEl = document.getElementById("newExName");
+      const muscleEl = document.getElementById("newExMuscle");
+      const modeEl = document.getElementById("newExMode");
+      const refEl = document.getElementById("newExRefMax");
+
+      const name = nameEl ? nameEl.value.trim() : "";
+      const muscle = muscleEl ? muscleEl.value : "Pecs";
+      const recommendedMode = modeEl ? modeEl.value : "total";
+      const refMax = refEl ? Number(refEl.value) : null;
+
+      if (!name) {
+        alert("⚠️ Donne un nom à ton exercice.");
+        return;
+      }
+
+      const baseId = slugifyId(name);
+      const id = makeUniqueExerciseId(baseId);
+
+      const ex = {
+        id,
+        name,
+        muscle,
+        recommendedMode,
+        refMax: (refMax && refMax > 0) ? refMax : null,
+        gifUrl: null
+      };
+
+      customExercises.push(ex);
+      saveCustomExercises();
+
+      // mapping muscle pour stats
+      exerciseToMuscle[id] = muscle;
+
+      saveSelectedFreeExerciseId(id);
+      renderLibre();
+
+      // Sync des autres vues (ça impacte stats / FIFA / etc.)
+      renderHome();
+      renderHistory();
+      renderProgression();
+      renderStatistics();
+    };
+
+    window.deleteCustomExercise = function(exerciseId) {
+      const ex = (customExercises || []).find(e => e.id === exerciseId);
+      if (!ex) return;
+
+      const used = state.logs.some(l => l.exerciseId === exerciseId);
+      const warning = used
+        ? "⚠️ Cet exercice a déjà des logs. Le supprimer n'efface PAS l'historique (mais il sera affiché sous son ID dans certains endroits). Continuer ?"
+        : "Supprimer cet exercice ?";
+      if (!confirm(warning)) return;
+
+      customExercises = (customExercises || []).filter(e => e.id !== exerciseId);
+      saveCustomExercises();
+
+      // On garde exerciseToMuscle comme tel (les logs existants en ont encore besoin),
+      // mais l'exercice ne sera plus sélectionnable dans l'UI.
+
+      // Fallback sélection
+      if (customExercises.length > 0) saveSelectedFreeExerciseId(customExercises[0].id);
+      else saveSelectedFreeExerciseId("__create__");
+
+      renderLibre();
+      renderHome();
+      renderHistory();
+      renderProgression();
+      renderStatistics();
+    };
+
+    window.addFreeSet = function(exerciseId) {
+      const weightInput = document.getElementById(`weight-free-${exerciseId}`);
+      const repsInput = document.getElementById(`reps-free-${exerciseId}`);
+      const rpeInput = document.getElementById(`rpe-free-${exerciseId}`);
+      const modeSelect = document.getElementById(`mode-free-${exerciseId}`);
+
+      const weight = weightInput ? weightInput.value : "";
+      const reps = repsInput ? repsInput.value : "";
+      const rpe = rpeInput ? rpeInput.value : "";
+      const mode = modeSelect ? modeSelect.value : "total";
+
+      if (!weight && mode !== "virtual" && mode !== "bodyweight") {
+        alert("⚠️ Veuillez remplir le poids (ou choisir un mode virtuel / poids de corps).");
+        return;
+      }
+      if (!reps) {
+        alert("⚠️ Veuillez remplir les répétitions.");
+        return;
+      }
+
+      const oldStats = computeExercisePRStats(state.user, exerciseId);
+
+      let weightVal = Number(weight) || 0;
+
+      if (mode === "bodyweight" && weightVal <= 0) {
+        weightVal = getUserBodyweight(state.user);
+        if (weightVal <= 0) {
+          alert("⚠️ Renseigne ton poids utilisateur (en haut) pour utiliser 'Poids du corps'.");
+          return;
+        }
+      }
+
+      state.logs.push({
+        id: makeRandomLogId(),
+        user: state.user,
+        date: state.date,
+        exerciseId: exerciseId,
+        weight: weightVal,
+        reps: Number(reps),
+        rpe: rpe ? Number(rpe) : null,
+        mode: mode
+      });
+
+      saveState();
+      if (weightInput) weightInput.value = "";
+      if (repsInput) repsInput.value = "";
+      if (rpeInput) rpeInput.value = "";
+
+      // Re-render libre + sync autres vues
+      renderLibre();
+      renderEntrainement();
+      renderLibre();
+      renderHome();
+      renderHistory();
+      renderProgression();
+      renderStatistics();
+
+      // PR "après" la nouvelle série
+      const newStats = computeExercisePRStats(state.user, exerciseId);
+      const prMessages = buildPRMessages(oldStats, newStats);
+      const prEl = document.getElementById(`pr-free-${exerciseId}`);
+      if (prEl && prMessages.length > 0) {
+        prEl.innerHTML = `
+          <div style="margin-top:6px;">
+            <div style="font-weight:700; margin-bottom:4px;">🏆 PR</div>
+            ${prMessages.map(m => `<div>• ${m}</div>`).join("")}
+          </div>
+        `;
+      }
+
+      // Suggestion "après série"
+      const suggEl = document.getElementById(`suggestion-free-${exerciseId}`);
+      if (suggEl) {
+        suggEl.innerHTML = `
+          <div style="margin-top:6px;">
+            <div style="font-weight:700; margin-bottom:4px;">➡️ Prochaine fois</div>
+            ${getNextLoadSuggestion(weightVal, Number(reps), rpe ? Number(rpe) : null)}
+          </div>
+        `;
+      }
+    };
+
     function renderStatistics() {
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - 30);
@@ -3155,13 +3686,9 @@ function loadState() {
         });
 
         Object.entries(exerciseGroups).forEach(([exId, exLogs]) => {
-          let exerciseName = exId;
-          Object.values(program).forEach(day => {
-            day.exercises.forEach(ex => {
-              if (ex.id === exId) exerciseName = ex.name;
-            });
-          });
-          
+          const def = getExerciseDefinition(exId);
+          const exerciseName = def ? def.name : exId;
+
           const volume = exLogs.reduce((sum, l) => {
             const effW = getEffectiveWeightForVolume(l);
             const r = Number(l.reps) || 0;
@@ -3965,6 +4492,7 @@ function loadState() {
             state.logs.splice(index, 1);
             saveState();
             renderEntrainement();
+            renderLibre();
             renderHome();
             renderHistory();
             renderProgression();
@@ -3975,6 +4503,8 @@ function loadState() {
     // ========== INIT ==========
     loadState();
     loadPlayerProfile();
+    loadCustomExercises();
+    setupFreeExerciseTab();
     userSelect.value = state.user;
     dateInput.value = state.date;
     fatigueSelect.value = state.fatigue || "normal";

@@ -1,7 +1,7 @@
 // MuscleBoss — Service Worker (cache + updates propres)
-// Version: 2025-12-13
+// Version: 2025-12-16
 
-const CACHE_NAME = "muscle-boss-v3-2025-12-13";
+const CACHE_NAME = "muscle-boss-v5-2025-12-16b";
 const CORE_ASSETS = [
   "./",
   "./index.html",
