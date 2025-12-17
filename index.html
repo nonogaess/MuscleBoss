@@ -59,21 +59,6 @@
       color: #E8E8E8;
     }
 
-    /* Style pour le select utilisateur dans le header */
-    #userSelect {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    #userSelect:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
-      border-color: rgba(0, 255, 136, 0.7);
-    }
-    #userSelect:focus {
-      outline: none;
-      box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
-      border-color: #00ff88;
-    }
-
     /* TOP TABS - 4 onglets comme sur le screenshot */
     .top-tabs {
       display: flex;
@@ -1593,110 +1578,13 @@
         padding: 10px;
       }
 
-  
-    /* ====== DATA TOOLS (bulk delete / undo import) ====== */
-    .data-tools{
-      margin-top: 14px;
-      padding: 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(255,255,255,0.04);
-    }
-    .data-tools-title{
-      font-weight: 800;
-      color: var(--mb-text);
-      margin-bottom: 8px;
-    }
-    .data-tools-row{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      margin-top: 8px;
-    }
-    .data-tools-label{
-      color: var(--mb-text-muted);
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-    .data-tools-user{
-      color: var(--mb-text);
-      font-weight: 900;
-      padding: 2px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.10);
-      background: rgba(0,0,0,0.15);
-    }
-    .danger-btn{
-      flex: 1;
-      min-width: 220px;
-      padding: 10px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,107,107,0.45);
-      background: rgba(255,107,107,0.14);
-      color: var(--mb-text);
-      font-size: 0.9rem;
-      font-weight: 900;
-      cursor: pointer;
-      transition: transform 0.12s ease, background 0.12s ease, opacity 0.12s ease;
-    }
-    .danger-btn:hover{ transform: translateY(-1px); background: rgba(255,107,107,0.20); }
-    .danger-btn:disabled{ opacity: 0.45; cursor: not-allowed; transform: none; }
-    .data-tools-hint{
-      margin-top: 8px;
-      color: var(--mb-text-muted);
-      font-size: 0.85rem;
-      line-height: 1.35;
-    }
-
-    .history-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-    .history-delete{
-      background: rgba(255,107,107,0.12);
-      border: 1px solid rgba(255,107,107,0.35);
-      color: #ff6b6b;
-      cursor: pointer;
-      border-radius: 10px;
-      padding: 6px 10px;
-      font-weight: 900;
-      transition: transform 0.12s ease, background 0.12s ease;
-    }
-    .history-delete:hover{ transform: translateY(-1px); background: rgba(255,107,107,0.20); }
-
-</style>
+  </style>
 </head>
 <body>
   <div class="app">
     <header>
       <h1>💪 MUSCLE BOSS ULTIMATE</h1>
       <p>Suivi Pro · Programme A/B/C · Arnaud & Dancho</p>
-      <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap;">
-        <!-- Sélecteur d'utilisateur -->
-        <div style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 200, 255, 0.15)); border: 3px solid rgba(0, 255, 136, 0.5); border-radius: 12px; padding: 8px 14px; box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);">
-          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-            <span style="font-size: 0.85rem; font-weight: 600; color: #9ca3af;">👤</span>
-            <select id="userSelect" style="padding: 6px 12px; font-size: 0.95rem; font-weight: 700; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.4); background: rgba(255, 255, 255, 0.1); color: #00ff88; cursor: pointer; transition: all 0.3s;">
-              <option value="Arnaud">💪 Arnaud</option>
-              <option value="Dancho">🔥 Dancho</option>
-            </select>
-          </label>
-        </div>
-        
-        <!-- Indicateur de date -->
-        <div id="dateIndicator" style="background: rgba(0, 255, 136, 0.15); border: 2px solid rgba(0, 255, 136, 0.4); border-radius: 12px; padding: 6px 14px; font-size: 0.9rem; font-weight: 700; color: #00ff88; box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);">
-          📅 <span id="currentDateDisplay">--</span>
-        </div>
-        
-        <!-- Bouton rafraîchir -->
-        <button onclick="forceRefreshApp()" style="background: rgba(255, 200, 0, 0.2); border: 2px solid rgba(255, 200, 0, 0.5); border-radius: 12px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600; color: #ffc800; cursor: pointer; transition: all 0.3s;">
-          🔄 Rafraîchir
-        </button>
-      </div>
     </header>
 
     <!-- TOP TABS - 4 onglets -->
@@ -1775,18 +1663,19 @@
 
     <!-- SECTION ENTRAÎNEMENT -->
     <div class="content-section" id="entrainement">
-      
-      <!-- Indicateur utilisateur et poids -->
-      <div style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(0, 255, 136, 0.2); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 150px;">
-            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 4px; font-weight: 600;">⚖️ Poids corporel (kg)</div>
-            <input id="bodyweightInput" type="number" min="30" max="200" placeholder="Ton poids" style="width: 100%; padding: 10px 12px; font-size: 1rem; font-weight: 600; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.3); background: rgba(255, 255, 255, 0.1); color: #e5e7eb;">
-          </div>
-        </div>
-      </div>
-
       <div class="controls">
+        <div class="control-row">
+          <label>Utilisateur</label>
+          <select id="userSelect">
+            <option value="Arnaud">Arnaud</option>
+            <option value="Dancho">Dancho</option>
+          </select>
+        </div>
+          <label style="margin-left:10px; font-size:0.85rem; color:#9ca3af;">
+            Poids (kg) :
+            <input id="bodyweightInput" type="number" min="30" max="200"
+                  style="width:70px; margin-left:6px; padding:4px 6px; border-radius:6px;">
+          </label>
         <div class="control-row">
           <label>Date</label>
           <input type="date" id="dateInput" />
@@ -1850,32 +1739,6 @@
       <button class="export-btn" id="exportBtn">💾 Exporter les données</button>
       <input type="file" id="importFile" accept="application/json" style="display:none" />
       <button class="export-btn" id="importBtn">📂 Importer des données</button>
-      <div class="data-tools">
-        <div class="data-tools-title">🧹 Nettoyage des données (sans supprimer série par série)</div>
-
-        <div class="data-tools-row">
-          <span class="data-tools-label">Utilisateur :</span>
-          <span class="data-tools-user" id="dataToolsUser"></span>
-        </div>
-
-        <div class="data-tools-row">
-          <label class="data-tools-label" for="deleteFrom">Du</label>
-          <input type="date" id="deleteFrom" />
-          <label class="data-tools-label" for="deleteTo">au</label>
-          <input type="date" id="deleteTo" />
-        </div>
-
-        <div class="data-tools-row">
-          <button class="danger-btn" id="deleteRangeBtn">🗑️ Supprimer la plage (utilisateur courant)</button>
-          <button class="danger-btn" id="undoImportBtn">↩️ Annuler le dernier import</button>
-          <button class="danger-btn" id="wipeAllBtn">🔥 Tout réinitialiser</button>
-        </div>
-
-        <div class="data-tools-hint">
-          Astuce : tu peux aussi supprimer une séance complète directement dans la liste d'historique (icône 🗑️ à droite de la date).
-        </div>
-      </div>
-
     </div>
 
     <!-- SECTION PROGRESSION -->
@@ -2185,8 +2048,7 @@
       date: new Date().toISOString().split("T")[0],
       currentDay: "A",
       fatigue: "normal",
-      logs: [],
-      lastImportBatch: null
+      logs: []
     };
 
     let currentView = "home";
@@ -2397,63 +2259,33 @@
 
 function loadState() {
       const saved = localStorage.getItem("muscleAppState");
-      const today = new Date().toISOString().split("T")[0];
-      
-      console.log(`📅 Date système: ${today}`);
-      
-      if (!saved) {
-        // Première fois : on force la date du jour
-        state.date = today;
-        console.log("✅ Première utilisation - Date initialisée à aujourd'hui");
-        saveState();
-        return;
-      }
+      if (!saved) return;
 
       try {
         const parsed = JSON.parse(saved);
         state.logs = assignStableIdsToLogs(parsed.logs || []);
         state.user = parsed.user || state.user;
-        state.date = today;  // ✅ Toujours démarrer sur la date du jour (ne pas réutiliser la dernière date enregistrée)
+        state.date = parsed.date || state.date;
         state.fatigue = parsed.fatigue || state.fatigue;
         state.currentDay = parsed.currentDay || state.currentDay;
-        state.lastImportBatch = parsed.lastImportBatch || state.lastImportBatch || null;
-        
-        console.log(`✅ État chargé - Date: ${state.date}, User: ${state.user}`);
       } catch (e) {
-        console.error("⚠️ muscleAppState corrompu:", e);
+        console.warn("⚠️ muscleAppState corrompu : reset safe.", e);
         // Reset "safe" sans casser l'app
         state.logs = assignStableIdsToLogs([]);
-        state.date = today;
-        saveState();
       }
     }
 
     function saveState() {
-      try {
-        const dataToSave = {
+      localStorage.setItem(
+        "muscleAppState",
+        JSON.stringify({
           logs: state.logs,
           user: state.user,
           date: state.date,
           fatigue: state.fatigue,
-          currentDay: state.currentDay,
-          lastImportBatch: state.lastImportBatch,
-          lastSaveTimestamp: new Date().toISOString()
-        };
-        
-        // Sauvegarde principale
-        localStorage.setItem("muscleAppState", JSON.stringify(dataToSave));
-        
-        // Sauvegarde de backup (en cas de corruption)
-        localStorage.setItem("muscleAppState_backup", JSON.stringify(dataToSave));
-        
-        console.log(`✅ Sauvegarde OK - ${state.logs.length} logs - Date: ${state.date}`);
-        
-        // Mettre à jour l'affichage de la date
-        updateDateDisplay();
-      } catch (e) {
-        console.error("❌ ERREUR de sauvegarde:", e);
-        alert("⚠️ Erreur lors de la sauvegarde des données. Vérifie l'espace de stockage disponible.");
-      }
+          currentDay: state.currentDay
+        })
+      );
     }
 
     function estimate1RM(weight, reps) {
@@ -2547,10 +2379,17 @@ function loadState() {
     function getLogMode(log) {
       if (log.mode) return log.mode;
 
-      // Si pas de mode dans le log (ancienne version),
-      // on prend le recommendedMode de l'exercice (programme OU custom), sinon "total".
       const def = getExerciseDefinition(log.exerciseId);
-      return (def && def.recommendedMode) ? def.recommendedMode : "total";
+      const rec = (def && def.recommendedMode) ? def.recommendedMode : "total";
+      const w = Number(log.weight) || 0;
+
+      // ✅ Règle “legacy safe” :
+      // - si l'ancien log avait un poids > 0, on suppose qu'il a été entré en "charge totale"
+      //   (sinon ça double et ça fausse tes stats, surtout pour les exos "par bras").
+      // - exception : si poids = 0 et que l'exo est "virtual" ou "bodyweight", on garde le mode recommandé.
+      if (w === 0 && (rec === "virtual" || rec === "bodyweight")) return rec;
+
+      return "total";
     }
 
 
@@ -2679,36 +2518,17 @@ function loadState() {
     // ========== EVENT LISTENERS ==========
     userSelect.addEventListener("change", (e) => {
       state.user = e.target.value;
-      
-      // 🔥 FORCE: Remettre la date à aujourd'hui quand on change d'utilisateur
-      const today = new Date().toISOString().split("T")[0];
-      state.date = today;
-      dateInput.value = today;
-      
       saveState();
-      
-      console.log(`👤 Utilisateur changé: ${state.user} - Date forcée: ${today}`);
-      
-      // Animation du sélecteur (plus subtile puisqu'il est dans le header)
-      e.target.style.transform = "scale(1.08)";
-      e.target.style.boxShadow = "0 0 30px rgba(0, 255, 136, 0.8), 0 0 50px rgba(0, 255, 136, 0.4)";
-      setTimeout(() => {
-        e.target.style.transform = "scale(1)";
-        e.target.style.boxShadow = "";
-      }, 300);
 
       if (bodyweightInput) {
         bodyweightInput.value = getUserBodyweight(state.user) || "";
       }
 
-      updateDateDisplay();
       renderEntrainement();
       renderLibre();
       renderStatistics();
       renderProgression();
       renderHome();
-      renderHistory();
-      updateDataToolsUI();
       updateTheme();
     });
 
@@ -2725,8 +2545,6 @@ function loadState() {
     dateInput.addEventListener("change", (e) => {
       state.date = e.target.value;
       saveState();
-      updateDateDisplay(); // Mettre à jour l'affichage
-      console.log(`📅 Date changée: ${state.date}`);
       renderEntrainement();
       renderLibre();
       renderHome();
@@ -2782,43 +2600,24 @@ function loadState() {
             return;
           }
 
-          // 1) Normalisation + IDs (conserve les séries identiques)
-          //    + "batch" pour pouvoir annuler un import en 1 clic
-          const batchId = "IMP-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
-          const importedLogs = assignStableIdsToLogs(json.logs).map(l => ({
-            ...l,
-            importBatch: l.importBatch || batchId
-          }));
+          // 1) Normalisation + IDs stables (conserve les séries identiques)
+          const importedLogs = assignStableIdsToLogs(json.logs);
 
           // 2) On s'assure que les logs existants ont des IDs
           state.logs = assignStableIdsToLogs(state.logs);
 
-          // 3) Fusion par ID, MAIS collision-safe :
-          //    si un ID existe déjà avec un contenu différent, on régénère un ID pour éviter d'écraser tes séries.
+          // 3) Fusion par ID (si même ID => on remplace, sinon on ajoute)
           const map = new Map();
           state.logs.forEach(l => map.set(l.id, l));
-
-          importedLogs.forEach(l => {
-            if (map.has(l.id)) {
-              const existing = map.get(l.id);
-              if (makeContentKey(existing) !== makeContentKey(l)) {
-                l.id = makeRandomLogId();
-              }
-            }
-            map.set(l.id, l);
-          });
+          importedLogs.forEach(l => map.set(l.id, l));
 
           state.logs = Array.from(map.values());
-          state.lastImportBatch = batchId;
 
           saveState();
           renderEntrainement();
-          renderLibre();
-          renderHome();
           renderHistory();
           renderStatistics();
           renderProgression();
-          updateDataToolsUI();
 
           alert("✅ Import terminé (fusion des données réussie).");
         } catch (err) {
@@ -3946,10 +3745,7 @@ function loadState() {
         mode: mode
       });
 
-      // ✅ Sauvegarde immédiate
       saveState();
-      console.log(`✅ Série libre ajoutée: ${exerciseId} - ${weightVal}kg x ${reps} reps (date: ${state.date})`);
-      
       if (weightInput) weightInput.value = "";
       if (repsInput) repsInput.value = "";
       if (rpeInput) rpeInput.value = "";
@@ -4120,15 +3916,13 @@ function loadState() {
     function renderHistory() {
       historyList.innerHTML = "";
 
-      const visibleLogs = state.logs.filter(l => l.user === state.user);
-
-      if (visibleLogs.length === 0) {
-        historyList.innerHTML = `<div style="text-align:center; color:#9ca3af;">Aucun historique disponible pour <strong>${state.user}</strong></div>`;
+      if (state.logs.length === 0) {
+        historyList.innerHTML = '<div style="text-align:center; color:#9ca3af;">Aucun historique disponible</div>';
         return;
       }
 
       const groupedByDate = {};
-      visibleLogs.forEach(log => {
+      state.logs.forEach(log => {
         if (!groupedByDate[log.date]) {
           groupedByDate[log.date] = [];
         }
@@ -4165,10 +3959,7 @@ function loadState() {
         });
 
         item.innerHTML = `
-          <div class="history-header">
-            <div class="history-date">${new Date(date).toLocaleDateString('fr-FR')}</div>
-            <button class="history-delete" title="Supprimer cette séance (${state.user})" onclick="deleteSessionByDate('${date}')">🗑️</button>
-          </div>
+          <div class="history-date">${new Date(date).toLocaleDateString('fr-FR')}</div>
           ${exercisesList}
         `;
         
@@ -4918,10 +4709,7 @@ function loadState() {
           mode: mode
         });
 
-          // ✅ Sauvegarde immédiate
           saveState();
-          console.log(`✅ Série ajoutée: ${exerciseId} - ${weightVal}kg x ${reps} reps (date: ${state.date})`);
-          
           weightInput.value = "";
           repsInput.value = "";
           rpeInput.value = "";
@@ -4972,241 +4760,17 @@ function loadState() {
           }
         };
 
-    
-        // ====== DATA TOOLS (bulk delete / undo import) ======
-        function updateDataToolsUI() {
-          const userEl = document.getElementById("dataToolsUser");
-          if (userEl) userEl.textContent = state.user;
-
-          const undoBtn = document.getElementById("undoImportBtn");
-          if (undoBtn) undoBtn.disabled = !state.lastImportBatch;
-        }
-
-        window.deleteSessionByDate = function(dateStr) {
-          const d = String(dateStr || "");
-          if (!d) return;
-          const ok = confirm(`Supprimer TOUTES les séries du ${new Date(d).toLocaleDateString('fr-FR')} pour ${state.user} ?`);
-          if (!ok) return;
-
-          state.logs = state.logs.filter(l => !(l.user === state.user && l.date === d));
-          saveState();
-          renderEntrainement();
-          renderLibre();
-          renderHome();
-          renderHistory();
-          renderProgression();
-          renderStatistics();
-          updateDataToolsUI();
-        };
-
-        function deleteSessionsRange(fromStr, toStr) {
-          const from = String(fromStr || "");
-          const to = String(toStr || "");
-          if (!from || !to) {
-            alert("⚠️ Choisis une date de début ET une date de fin.");
-            return;
-          }
-
-          const a = from <= to ? from : to;
-          const b = from <= to ? to : from;
-
-          const ok = confirm(`Supprimer toutes les séries de ${state.user} du ${new Date(a).toLocaleDateString('fr-FR')} au ${new Date(b).toLocaleDateString('fr-FR')} ?`);
-          if (!ok) return;
-
-          state.logs = state.logs.filter(l => !(l.user === state.user && l.date >= a && l.date <= b));
-          saveState();
-          renderEntrainement();
-          renderLibre();
-          renderHome();
-          renderHistory();
-          renderProgression();
-          renderStatistics();
-          updateDataToolsUI();
-        }
-
-        function undoLastImport() {
-          if (!state.lastImportBatch) {
-            alert("ℹ️ Aucun import récent à annuler.");
-            return;
-          }
-
-          const ok = confirm("Annuler le dernier import ? (toutes les séries importées dans le dernier fichier seront supprimées)");
-          if (!ok) return;
-
-          const batch = state.lastImportBatch;
-          state.logs = state.logs.filter(l => l.importBatch !== batch);
-          state.lastImportBatch = null;
-
-          saveState();
-          renderEntrainement();
-          renderLibre();
-          renderHome();
-          renderHistory();
-          renderProgression();
-          renderStatistics();
-          updateDataToolsUI();
-        }
-
-        function wipeAllData() {
-          const ok = confirm("⚠️ Tout réinitialiser ?\n\nCela supprime : séances, historique, profils et exercices libres.\n(À faire seulement si tu as exporté un backup.)");
-          if (!ok) return;
-
-          try {
-            localStorage.removeItem("muscleAppState");
-            localStorage.removeItem("musclePlayerProfile");
-            localStorage.removeItem("muscleBodyweightByUser");
-            localStorage.removeItem(CUSTOM_EX_KEY);
-            localStorage.removeItem(CUSTOM_EX_SELECTED_KEY);
-          } catch (e) {}
-
-          location.reload();
-        }
-
-        function bindDataTools() {
-          const delBtn = document.getElementById("deleteRangeBtn");
-          const undoBtn = document.getElementById("undoImportBtn");
-          const wipeBtn = document.getElementById("wipeAllBtn");
-
-          if (delBtn) {
-            delBtn.addEventListener("click", () => {
-              const from = document.getElementById("deleteFrom")?.value;
-              const to = document.getElementById("deleteTo")?.value;
-              deleteSessionsRange(from, to);
-            });
-          }
-
-          if (undoBtn) {
-            undoBtn.addEventListener("click", () => undoLastImport());
-          }
-
-          if (wipeBtn) {
-            wipeBtn.addEventListener("click", () => wipeAllData());
-          }
-
-          updateDataToolsUI();
-        }
-
-
     // ========== INIT ==========
-    
-    // 🔥 ÉTAPE 1: Forcer la date AVANT tout le reste
-    (function forceDateUpdate() {
-      const today = new Date().toISOString().split("T")[0];
-      const saved = localStorage.getItem("muscleAppState");
-      
-      if (saved) {
-        try {
-          const data = JSON.parse(saved);
-          if (data.date !== today) {
-            console.warn(`🔥 FORCE UPDATE: ${data.date} → ${today}`);
-            data.date = today;
-            localStorage.setItem("muscleAppState", JSON.stringify(data));
-          }
-        } catch(e) {
-          console.error("Erreur force update:", e);
-        }
-      }
-    })();
-    
-    // Fonction pour mettre à jour l'affichage de la date
-    function updateDateDisplay() {
-      const dateDisplay = document.getElementById("currentDateDisplay");
-      const dateIndicator = document.getElementById("dateIndicator");
-      
-      if (dateDisplay) {
-        const dateObj = new Date(state.date + "T00:00:00");
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        dateDisplay.textContent = dateObj.toLocaleDateString('fr-FR', options);
-        
-        // Vérifier si la date est aujourd'hui
-        const today = new Date().toISOString().split("T")[0];
-        if (state.date !== today && dateIndicator) {
-          // La date n'est pas aujourd'hui - afficher un avertissement
-          dateIndicator.style.background = "rgba(255, 100, 0, 0.2)";
-          dateIndicator.style.borderColor = "rgba(255, 100, 0, 0.6)";
-          dateIndicator.style.color = "#ff6400";
-          
-          // Ajouter un bouton pour forcer la mise à jour
-          const warningBtn = document.createElement("button");
-          warningBtn.textContent = "⚠️ Mettre à jour";
-          warningBtn.style.cssText = "margin-left: 8px; padding: 4px 8px; background: rgba(255, 100, 0, 0.3); border: 1px solid rgba(255, 100, 0, 0.6); border-radius: 6px; color: #ff6400; font-size: 0.75rem; cursor: pointer; font-weight: 600;";
-          warningBtn.onclick = function() {
-            state.date = today;
-            saveState();
-            dateInput.value = today;
-            updateDateDisplay();
-            renderEntrainement();
-            renderLibre();
-            renderHome();
-            alert("✅ Date mise à jour vers aujourd'hui!");
-          };
-          
-          // Ajouter le bouton si pas déjà présent
-          if (!dateIndicator.querySelector("button")) {
-            dateIndicator.appendChild(warningBtn);
-          }
-        } else if (dateIndicator) {
-          // La date est correcte - style normal
-          dateIndicator.style.background = "rgba(0, 255, 136, 0.15)";
-          dateIndicator.style.borderColor = "rgba(0, 255, 136, 0.4)";
-          dateIndicator.style.color = "#00ff88";
-          
-          // Supprimer le bouton d'avertissement s'il existe
-          const warningBtn = dateIndicator.querySelector("button");
-          if (warningBtn) warningBtn.remove();
-        }
-      }
-      
-      // 🔥 CRITIQUE: Synchroniser le champ date avec state.date
-      if (dateInput && state.date) {
-        dateInput.value = state.date;
-        console.log(`🔄 dateInput synchronisé: ${state.date}`);
-      }
-    }
-    
-    // Fonction pour forcer le rafraîchissement de l'app
-    window.forceRefreshApp = function() {
-      const confirmRefresh = confirm("🔄 Rafraîchir l'application ?\n\nCela va recharger la page avec les dernières données sauvegardées.");
-      if (confirmRefresh) {
-        // Forcer la mise à jour du service worker
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(registrations => {
-            registrations.forEach(reg => reg.update());
-          });
-        }
-        
-        // Vider le cache et recharger
-        if ('caches' in window) {
-          caches.keys().then(keys => {
-            keys.forEach(key => caches.delete(key));
-          }).then(() => {
-            location.reload(true);
-          });
-        } else {
-          location.reload(true);
-        }
-      }
-    };
-    
-    // 🔥 ÉTAPE 2: Charger l'état (la date est déjà corrigée)
     loadState();
     loadPlayerProfile();
     loadCustomExercises();
     setupFreeExerciseTab();
-    
-    // 🔥 ÉTAPE 3: Forcer la synchronisation des champs
     userSelect.value = state.user;
-    dateInput.value = state.date;  // Force la date du state
+    dateInput.value = state.date;
     fatigueSelect.value = state.fatigue || "normal";
-    
-    // 🔥 ÉTAPE 4: Mettre à jour l'affichage
-    updateDateDisplay();
-    
-    // 🔥 ÉTAPE 5: Render
     renderHome();
     renderEntrainement();
     setupProfileInputs();
-    bindDataTools();
 
     loadBodyweights();
     if (bodyweightInput) bodyweightInput.value = getUserBodyweight(state.user) || "";
