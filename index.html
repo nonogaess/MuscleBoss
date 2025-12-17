@@ -1857,6 +1857,10 @@
           <span class="data-tools-label">Utilisateur :</span>
           <span class="data-tools-user" id="dataToolsUser"></span>
         </div>
+        
+        <div class="data-tools-row">
+          <button class="export-btn" id="forceTodayBtn" style="background: rgba(0, 255, 136, 0.2); border-color: rgba(0, 255, 136, 0.4);">📅 Forcer la date à aujourd'hui</button>
+        </div>
 
         <div class="data-tools-row">
           <label class="data-tools-label" for="deleteFrom">Du</label>
@@ -2781,6 +2785,12 @@ function loadState() {
             alert("⚠️ Fichier invalide : pas de propriété 'logs'.");
             return;
           }
+          
+          // 🔥 PROTECTION: Ignorer la date du fichier JSON - on garde toujours la date actuelle
+          const importedDate = json.date;
+          if (importedDate) {
+            console.warn(`⚠️ Date ignorée du JSON: ${importedDate} - On garde la date actuelle`);
+          }
 
           // 1) Normalisation + IDs (conserve les séries identiques)
           //    + "batch" pour pouvoir annuler un import en 1 clic
@@ -2811,7 +2821,18 @@ function loadState() {
           state.logs = Array.from(map.values());
           state.lastImportBatch = batchId;
 
+          // 🔥 CORRECTION CRITIQUE: Forcer la date du jour après l'import
+          const today = new Date().toISOString().split("T")[0];
+          state.date = today;
+          
+          console.log(`✅ Import terminé - Date forcée: ${today}`);
+
           saveState();
+          
+          // 🔥 Synchroniser le champ date
+          if (dateInput) dateInput.value = today;
+          updateDateDisplay();
+          
           renderEntrainement();
           renderLibre();
           renderHome();
@@ -2820,7 +2841,7 @@ function loadState() {
           renderProgression();
           updateDataToolsUI();
 
-          alert("✅ Import terminé (fusion des données réussie).");
+          alert(`✅ Import terminé (fusion des données réussie).\n📅 Date mise à jour: ${today}`);
         } catch (err) {
           console.error(err);
           alert("⚠️ Erreur lors de la lecture du fichier JSON.");
@@ -5066,6 +5087,7 @@ function loadState() {
           const delBtn = document.getElementById("deleteRangeBtn");
           const undoBtn = document.getElementById("undoImportBtn");
           const wipeBtn = document.getElementById("wipeAllBtn");
+          const forceTodayBtn = document.getElementById("forceTodayBtn");
 
           if (delBtn) {
             delBtn.addEventListener("click", () => {
@@ -5081,6 +5103,26 @@ function loadState() {
 
           if (wipeBtn) {
             wipeBtn.addEventListener("click", () => wipeAllData());
+          }
+          
+          if (forceTodayBtn) {
+            forceTodayBtn.addEventListener("click", () => {
+              const today = new Date().toISOString().split("T")[0];
+              const oldDate = state.date;
+              
+              state.date = today;
+              if (dateInput) dateInput.value = today;
+              
+              saveState();
+              updateDateDisplay();
+              
+              renderEntrainement();
+              renderLibre();
+              renderHome();
+              renderHistory();
+              
+              alert(`✅ Date mise à jour!\n\n📅 Ancienne date: ${oldDate}\n📅 Nouvelle date: ${today}`);
+            });
           }
 
           updateDataToolsUI();
