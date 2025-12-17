@@ -2399,7 +2399,6 @@ function loadState() {
       const saved = localStorage.getItem("muscleAppState");
       const today = new Date().toISOString().split("T")[0];
       
-      // 🔥 FORCE UPDATE: Toujours vérifier et mettre à jour la date au chargement
       console.log(`📅 Date système: ${today}`);
       
       if (!saved) {
@@ -2414,32 +2413,17 @@ function loadState() {
         const parsed = JSON.parse(saved);
         state.logs = assignStableIdsToLogs(parsed.logs || []);
         state.user = parsed.user || state.user;
-        
-        const savedDate = parsed.date || state.date;
-        console.log(`📅 Date sauvegardée: ${savedDate}`);
-        
-        // ⚠️ CORRECTION CRITIQUE : TOUJOURS mettre à jour si différent
-        if (savedDate !== today) {
-          console.warn(`🔄 CORRECTION AUTOMATIQUE: ${savedDate} → ${today}`);
-          state.date = today;
-          // Sauvegarder IMMÉDIATEMENT la nouvelle date
-          setTimeout(() => {
-            saveState();
-            console.log("✅ Date corrigée et sauvegardée");
-          }, 100);
-        } else {
-          state.date = savedDate;
-          console.log("✅ Date déjà à jour");
-        }
-        
+        state.date = parsed.date || today;  // La date a déjà été corrigée avant
         state.fatigue = parsed.fatigue || state.fatigue;
         state.currentDay = parsed.currentDay || state.currentDay;
         state.lastImportBatch = parsed.lastImportBatch || state.lastImportBatch || null;
+        
+        console.log(`✅ État chargé - Date: ${state.date}, User: ${state.user}`);
       } catch (e) {
         console.error("⚠️ muscleAppState corrompu:", e);
         // Reset "safe" sans casser l'app
         state.logs = assignStableIdsToLogs([]);
-        state.date = today; // Force la date du jour
+        state.date = today;
         saveState();
       }
     }
@@ -2695,9 +2679,15 @@ function loadState() {
     // ========== EVENT LISTENERS ==========
     userSelect.addEventListener("change", (e) => {
       state.user = e.target.value;
+      
+      // 🔥 FORCE: Remettre la date à aujourd'hui quand on change d'utilisateur
+      const today = new Date().toISOString().split("T")[0];
+      state.date = today;
+      dateInput.value = today;
+      
       saveState();
       
-      console.log(`👤 Utilisateur changé: ${state.user}`);
+      console.log(`👤 Utilisateur changé: ${state.user} - Date forcée: ${today}`);
       
       // Animation du sélecteur (plus subtile puisqu'il est dans le header)
       e.target.style.transform = "scale(1.08)";
@@ -2711,6 +2701,7 @@ function loadState() {
         bodyweightInput.value = getUserBodyweight(state.user) || "";
       }
 
+      updateDateDisplay();
       renderEntrainement();
       renderLibre();
       renderStatistics();
@@ -5098,6 +5089,25 @@ function loadState() {
 
     // ========== INIT ==========
     
+    // 🔥 ÉTAPE 1: Forcer la date AVANT tout le reste
+    (function forceDateUpdate() {
+      const today = new Date().toISOString().split("T")[0];
+      const saved = localStorage.getItem("muscleAppState");
+      
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data.date !== today) {
+            console.warn(`🔥 FORCE UPDATE: ${data.date} → ${today}`);
+            data.date = today;
+            localStorage.setItem("muscleAppState", JSON.stringify(data));
+          }
+        } catch(e) {
+          console.error("Erreur force update:", e);
+        }
+      }
+    })();
+    
     // Fonction pour mettre à jour l'affichage de la date
     function updateDateDisplay() {
       const dateDisplay = document.getElementById("currentDateDisplay");
@@ -5146,6 +5156,12 @@ function loadState() {
           if (warningBtn) warningBtn.remove();
         }
       }
+      
+      // 🔥 CRITIQUE: Synchroniser le champ date avec state.date
+      if (dateInput && state.date) {
+        dateInput.value = state.date;
+        console.log(`🔄 dateInput synchronisé: ${state.date}`);
+      }
     }
     
     // Fonction pour forcer le rafraîchissement de l'app
@@ -5172,14 +5188,21 @@ function loadState() {
       }
     };
     
+    // 🔥 ÉTAPE 2: Charger l'état (la date est déjà corrigée)
     loadState();
     loadPlayerProfile();
     loadCustomExercises();
     setupFreeExerciseTab();
+    
+    // 🔥 ÉTAPE 3: Forcer la synchronisation des champs
     userSelect.value = state.user;
-    dateInput.value = state.date;
+    dateInput.value = state.date;  // Force la date du state
     fatigueSelect.value = state.fatigue || "normal";
-    updateDateDisplay(); // Afficher la date dès le chargement
+    
+    // 🔥 ÉTAPE 4: Mettre à jour l'affichage
+    updateDateDisplay();
+    
+    // 🔥 ÉTAPE 5: Render
     renderHome();
     renderEntrainement();
     setupProfileInputs();
