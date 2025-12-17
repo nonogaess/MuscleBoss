@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Muscle Boss Ultimate</title>
+  <title>💪 Muscle Boss Ultimate V2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -1673,7 +1673,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>MUSCLE BOSS ULTIMATE</h1>
+      <h1>💪 MUSCLE BOSS ULTIMATE</h1>
       <p>Suivi Pro · Programme A/B/C · Arnaud & Dancho</p>
       <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap;">
         <!-- Sélecteur d'utilisateur -->
@@ -1681,8 +1681,8 @@
           <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
             <span style="font-size: 0.85rem; font-weight: 600; color: #9ca3af;">👤</span>
             <select id="userSelect" style="padding: 6px 12px; font-size: 0.95rem; font-weight: 700; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.4); background: rgba(255, 255, 255, 0.1); color: #00ff88; cursor: pointer; transition: all 0.3s;">
-              <option value="Arnaud">Arnaud</option>
-              <option value="Dancho">Dancho</option>
+              <option value="Arnaud">💪 Arnaud</option>
+              <option value="Dancho">🔥 Dancho</option>
             </select>
           </label>
         </div>
@@ -1719,7 +1719,7 @@
         <div class="fifa-card" id="fifaCard">
           <!-- Le contenu sera généré en JS -->
           <div class="fifa-card-placeholder">
-            Commence à enregistrer des séances pour générer ta carte joueur 💪
+            Commence à enregistrer des séances pour générer ta carte joueur ⚽💪
           </div>
         </div>
 
@@ -2399,9 +2399,14 @@ function loadState() {
       const saved = localStorage.getItem("muscleAppState");
       const today = new Date().toISOString().split("T")[0];
       
+      // 🔥 FORCE UPDATE: Toujours vérifier et mettre à jour la date au chargement
+      console.log(`📅 Date système: ${today}`);
+      
       if (!saved) {
         // Première fois : on force la date du jour
         state.date = today;
+        console.log("✅ Première utilisation - Date initialisée à aujourd'hui");
+        saveState();
         return;
       }
 
@@ -2410,26 +2415,32 @@ function loadState() {
         state.logs = assignStableIdsToLogs(parsed.logs || []);
         state.user = parsed.user || state.user;
         
-        // ⚠️ CORRECTION CRITIQUE : Mise à jour automatique de la date
-        // Si la date sauvegardée n'est pas aujourd'hui, on la met à jour
         const savedDate = parsed.date || state.date;
+        console.log(`📅 Date sauvegardée: ${savedDate}`);
+        
+        // ⚠️ CORRECTION CRITIQUE : TOUJOURS mettre à jour si différent
         if (savedDate !== today) {
-          console.log(`🔄 Mise à jour automatique : ${savedDate} → ${today}`);
+          console.warn(`🔄 CORRECTION AUTOMATIQUE: ${savedDate} → ${today}`);
           state.date = today;
-          // Sauvegarder immédiatement la nouvelle date
-          saveState();
+          // Sauvegarder IMMÉDIATEMENT la nouvelle date
+          setTimeout(() => {
+            saveState();
+            console.log("✅ Date corrigée et sauvegardée");
+          }, 100);
         } else {
           state.date = savedDate;
+          console.log("✅ Date déjà à jour");
         }
         
         state.fatigue = parsed.fatigue || state.fatigue;
         state.currentDay = parsed.currentDay || state.currentDay;
         state.lastImportBatch = parsed.lastImportBatch || state.lastImportBatch || null;
       } catch (e) {
-        console.warn("⚠️ muscleAppState corrompu : reset safe.", e);
+        console.error("⚠️ muscleAppState corrompu:", e);
         // Reset "safe" sans casser l'app
         state.logs = assignStableIdsToLogs([]);
         state.date = today; // Force la date du jour
+        saveState();
       }
     }
 
@@ -5090,10 +5101,50 @@ function loadState() {
     // Fonction pour mettre à jour l'affichage de la date
     function updateDateDisplay() {
       const dateDisplay = document.getElementById("currentDateDisplay");
+      const dateIndicator = document.getElementById("dateIndicator");
+      
       if (dateDisplay) {
         const dateObj = new Date(state.date + "T00:00:00");
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         dateDisplay.textContent = dateObj.toLocaleDateString('fr-FR', options);
+        
+        // Vérifier si la date est aujourd'hui
+        const today = new Date().toISOString().split("T")[0];
+        if (state.date !== today && dateIndicator) {
+          // La date n'est pas aujourd'hui - afficher un avertissement
+          dateIndicator.style.background = "rgba(255, 100, 0, 0.2)";
+          dateIndicator.style.borderColor = "rgba(255, 100, 0, 0.6)";
+          dateIndicator.style.color = "#ff6400";
+          
+          // Ajouter un bouton pour forcer la mise à jour
+          const warningBtn = document.createElement("button");
+          warningBtn.textContent = "⚠️ Mettre à jour";
+          warningBtn.style.cssText = "margin-left: 8px; padding: 4px 8px; background: rgba(255, 100, 0, 0.3); border: 1px solid rgba(255, 100, 0, 0.6); border-radius: 6px; color: #ff6400; font-size: 0.75rem; cursor: pointer; font-weight: 600;";
+          warningBtn.onclick = function() {
+            state.date = today;
+            saveState();
+            dateInput.value = today;
+            updateDateDisplay();
+            renderEntrainement();
+            renderLibre();
+            renderHome();
+            alert("✅ Date mise à jour vers aujourd'hui!");
+          };
+          
+          // Ajouter le bouton si pas déjà présent
+          if (!dateIndicator.querySelector("button")) {
+            dateIndicator.appendChild(warningBtn);
+          }
+        } else if (dateIndicator) {
+          // La date est correcte - style normal
+          dateIndicator.style.background = "rgba(0, 255, 136, 0.15)";
+          dateIndicator.style.borderColor = "rgba(0, 255, 136, 0.4)";
+          dateIndicator.style.color = "#00ff88";
+          
+          // Supprimer le bouton d'avertissement s'il existe
+          const warningBtn = dateIndicator.querySelector("button");
+          if (warningBtn) warningBtn.remove();
+        }
       }
     }
     

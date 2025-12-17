@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Diagnostic Muscle Boss</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        .info { margin: 10px 0; padding: 10px; background: #16213e; border-radius: 8px; }
+        .warning { background: #443311; border-left: 4px solid #ff9800; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnostic Muscle Boss</h1>
+    
+    <div class="info">
+        <strong>Date du jour :</strong> <span id="todayDate"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Date sauvegardée dans localStorage :</strong> <span id="savedDate"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Nombre de logs :</strong> <span id="logsCount"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Service Worker actif :</strong> <span id="swStatus"></span>
+    </div>
+    
+    <div class="info">
+        <strong>Taille localStorage :</strong> <span id="storageSize"></span>
+    </div>
+    
+    <h2>Actions de réparation</h2>
+    <button onclick="fixDate()">🔧 Forcer la date du jour</button>
+    <button onclick="clearCache()">🗑️ Vider le cache</button>
+    <button onclick="unregisterSW()">❌ Désinstaller Service Worker</button>
+    <button onclick="fullReset()">⚠️ Reset complet (prudence!)</button>
+    
+    <div id="result" style="margin-top: 20px;"></div>
+    
+    <script>
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('todayDate').textContent = today;
+        
+        // Vérifier localStorage
+        const saved = localStorage.getItem('muscleAppState');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                document.getElementById('savedDate').textContent = data.date || 'N/A';
+                document.getElementById('logsCount').textContent = (data.logs || []).length;
+            } catch(e) {
+                document.getElementById('savedDate').textContent = 'ERREUR: ' + e.message;
+            }
+        } else {
+            document.getElementById('savedDate').textContent = 'Aucune donnée';
+        }
+        
+        // Vérifier Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                document.getElementById('swStatus').textContent = regs.length > 0 ? '✅ Actif (' + regs.length + ')' : '❌ Inactif';
+            });
+        } else {
+            document.getElementById('swStatus').textContent = '❌ Non supporté';
+        }
+        
+        // Taille storage
+        let size = 0;
+        for (let key in localStorage) {
+            if (localStorage.hasOwnProperty(key)) {
+                size += localStorage[key].length;
+            }
+        }
+        document.getElementById('storageSize').textContent = (size / 1024).toFixed(2) + ' KB';
+        
+        function showResult(msg, isError = false) {
+            const div = document.getElementById('result');
+            div.innerHTML = `<div class="info ${isError ? 'warning' : ''}">${msg}</div>`;
+        }
+        
+        function fixDate() {
+            const saved = localStorage.getItem('muscleAppState');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    data.date = today;
+                    localStorage.setItem('muscleAppState', JSON.stringify(data));
+                    showResult('✅ Date mise à jour vers ' + today);
+                    setTimeout(() => location.reload(), 1000);
+                } catch(e) {
+                    showResult('❌ Erreur: ' + e.message, true);
+                }
+            }
+        }
+        
+        function clearCache() {
+            if ('caches' in window) {
+                caches.keys().then(keys => {
+                    Promise.all(keys.map(key => caches.delete(key)))
+                        .then(() => {
+                            showResult('✅ Cache vidé (' + keys.length + ' caches supprimés)');
+                            setTimeout(() => location.reload(), 1000);
+                        });
+                });
+            }
+        }
+        
+        function unregisterSW() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    Promise.all(regs.map(reg => reg.unregister()))
+                        .then(() => {
+                            showResult('✅ Service Worker désinstallé');
+                            setTimeout(() => location.reload(), 1000);
+                        });
+                });
+            }
+        }
+        
+        function fullReset() {
+            if (confirm('⚠️ ATTENTION: Ceci va supprimer TOUTES tes données!\n\nExporte d\'abord un backup si tu veux garder tes séances.\n\nContinuer?')) {
+                localStorage.clear();
+                clearCache();
+                unregisterSW();
+                showResult('✅ Reset complet effectué');
+                setTimeout(() => location.href = './index.html', 2000);
+            }
+        }
+    </script>
+</body>
+</html>
