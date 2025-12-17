@@ -2361,17 +2361,6 @@
     }
 
     function normalizeLog(raw) {
-      // ✅ Migration "ancienne version" :
-      // Avant, certains logs n'avaient pas de champ "mode".
-      // Et comme getLogMode() retombait sur recommendedMode (souvent "per_arm"),
-      // ça doublait la charge (w*2) et faisait exploser les stats (ex: BIC = 100).
-      //
-      // Ici, on déduit un mode sûr pour les vieux logs :
-      // - Abdos / core -> virtual
-      // - Bodyweight (ex: dips) -> bodyweight
-      // - Sinon -> total (par défaut, car historiquement tu notais souvent la charge totale).
-      const inferredMode = raw.mode ? raw.mode : inferLegacyMode(raw.exerciseId, raw.weight, raw.user);
-
       return {
         id: raw.id || null,
         user: raw.user,
@@ -2380,7 +2369,7 @@
         weight: Number(raw.weight) || 0,
         reps: Number(raw.reps) || 0,
         rpe: raw.rpe != null ? Number(raw.rpe) : null,
-        mode: inferredMode
+        mode: raw.mode || null
       };
     }
 
@@ -2424,7 +2413,7 @@ function loadState() {
         const parsed = JSON.parse(saved);
         state.logs = assignStableIdsToLogs(parsed.logs || []);
         state.user = parsed.user || state.user;
-        state.date = parsed.date || today;  // La date a déjà été corrigée avant
+        state.date = today;  // ✅ Toujours démarrer sur la date du jour (ne pas réutiliser la dernière date enregistrée)
         state.fatigue = parsed.fatigue || state.fatigue;
         state.currentDay = parsed.currentDay || state.currentDay;
         state.lastImportBatch = parsed.lastImportBatch || state.lastImportBatch || null;
@@ -2555,30 +2544,15 @@ function loadState() {
     // ========== GESTION DES MODES DE CHARGE ==========
     // Retourne le mode de log ("total", "per_arm", "bodyweight", "virtual")
     // avec un fallback propre pour les anciens logs.
-    function inferLegacyMode(exerciseId, weight, user) {
-      const exId = String(exerciseId || "");
-      const w = Number(weight) || 0;
-
-      const def = getExerciseDefinition(exId);
-      const rec = (def && def.recommendedMode) ? def.recommendedMode : null;
-      const muscle = (def && def.muscle) ? def.muscle : (exerciseToMuscle[exId] || null);
-
-      // Abdos / core : on force "virtual" pour éviter les 0 et rester cohérent avec l'historique.
-      if (rec === "virtual" || muscle === "Abdos" || exId === "core_combo") return "virtual";
-
-      // Exercices poids du corps : si aucun poids n'était saisi dans les anciennes versions,
-      // on considère "bodyweight".
-      if ((rec === "bodyweight" || exId === "triceps_choice") && w <= 0) return "bodyweight";
-
-      // ✅ Default sûr pour legacy : "total"
-      // (sinon, recommendedMode="per_arm" double la charge et fausse la stat)
-      return "total";
-    }
-
     function getLogMode(log) {
       if (log.mode) return log.mode;
-      return inferLegacyMode(log.exerciseId, log.weight, log.user);
+
+      // Si pas de mode dans le log (ancienne version),
+      // on prend le recommendedMode de l'exercice (programme OU custom), sinon "total".
+      const def = getExerciseDefinition(log.exerciseId);
+      return (def && def.recommendedMode) ? def.recommendedMode : "total";
     }
+
 
     // Poids effectif pour tout ce qui est "volume" (tonnage, IPG, etc.)
     function getEffectiveWeightForVolume(log) {
