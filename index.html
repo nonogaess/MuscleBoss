@@ -59,6 +59,21 @@
       color: #E8E8E8;
     }
 
+    /* Style pour le select utilisateur dans le header */
+    #userSelect {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #userSelect:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+      border-color: rgba(0, 255, 136, 0.7);
+    }
+    #userSelect:focus {
+      outline: none;
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
+      border-color: #00ff88;
+    }
+
     /* TOP TABS - 4 onglets comme sur le screenshot */
     .top-tabs {
       display: flex;
@@ -1660,6 +1675,28 @@
     <header>
       <h1>💪 MUSCLE BOSS ULTIMATE</h1>
       <p>Suivi Pro · Programme A/B/C · Arnaud & Dancho</p>
+      <div style="display: flex; justify-content: center; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap;">
+        <!-- Sélecteur d'utilisateur -->
+        <div style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 200, 255, 0.15)); border: 3px solid rgba(0, 255, 136, 0.5); border-radius: 12px; padding: 8px 14px; box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <span style="font-size: 0.85rem; font-weight: 600; color: #9ca3af;">👤</span>
+            <select id="userSelect" style="padding: 6px 12px; font-size: 0.95rem; font-weight: 700; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.4); background: rgba(255, 255, 255, 0.1); color: #00ff88; cursor: pointer; transition: all 0.3s;">
+              <option value="Arnaud">💪 Arnaud</option>
+              <option value="Dancho">🔥 Dancho</option>
+            </select>
+          </label>
+        </div>
+        
+        <!-- Indicateur de date -->
+        <div id="dateIndicator" style="background: rgba(0, 255, 136, 0.15); border: 2px solid rgba(0, 255, 136, 0.4); border-radius: 12px; padding: 6px 14px; font-size: 0.9rem; font-weight: 700; color: #00ff88; box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);">
+          📅 <span id="currentDateDisplay">--</span>
+        </div>
+        
+        <!-- Bouton rafraîchir -->
+        <button onclick="forceRefreshApp()" style="background: rgba(255, 200, 0, 0.2); border: 2px solid rgba(255, 200, 0, 0.5); border-radius: 12px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600; color: #ffc800; cursor: pointer; transition: all 0.3s;">
+          🔄 Rafraîchir
+        </button>
+      </div>
     </header>
 
     <!-- TOP TABS - 4 onglets -->
@@ -1738,19 +1775,18 @@
 
     <!-- SECTION ENTRAÎNEMENT -->
     <div class="content-section" id="entrainement">
-      <div class="controls">
-        <div class="control-row">
-          <label>Utilisateur</label>
-          <select id="userSelect">
-            <option value="Arnaud">Arnaud</option>
-            <option value="Dancho">Dancho</option>
-          </select>
+      
+      <!-- Indicateur utilisateur et poids -->
+      <div style="background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(0, 255, 136, 0.2); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 150px;">
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #9ca3af; margin-bottom: 4px; font-weight: 600;">⚖️ Poids corporel (kg)</div>
+            <input id="bodyweightInput" type="number" min="30" max="200" placeholder="Ton poids" style="width: 100%; padding: 10px 12px; font-size: 1rem; font-weight: 600; border-radius: 8px; border: 2px solid rgba(0, 255, 136, 0.3); background: rgba(255, 255, 255, 0.1); color: #e5e7eb;">
+          </div>
         </div>
-          <label style="margin-left:10px; font-size:0.85rem; color:#9ca3af;">
-            Poids (kg) :
-            <input id="bodyweightInput" type="number" min="30" max="200"
-                  style="width:70px; margin-left:6px; padding:4px 6px; border-radius:6px;">
-          </label>
+      </div>
+
+      <div class="controls">
         <div class="control-row">
           <label>Date</label>
           <input type="date" id="dateInput" />
@@ -2361,13 +2397,31 @@
 
 function loadState() {
       const saved = localStorage.getItem("muscleAppState");
-      if (!saved) return;
+      const today = new Date().toISOString().split("T")[0];
+      
+      if (!saved) {
+        // Première fois : on force la date du jour
+        state.date = today;
+        return;
+      }
 
       try {
         const parsed = JSON.parse(saved);
         state.logs = assignStableIdsToLogs(parsed.logs || []);
         state.user = parsed.user || state.user;
-        state.date = parsed.date || state.date;
+        
+        // ⚠️ CORRECTION CRITIQUE : Mise à jour automatique de la date
+        // Si la date sauvegardée n'est pas aujourd'hui, on la met à jour
+        const savedDate = parsed.date || state.date;
+        if (savedDate !== today) {
+          console.log(`🔄 Mise à jour automatique : ${savedDate} → ${today}`);
+          state.date = today;
+          // Sauvegarder immédiatement la nouvelle date
+          saveState();
+        } else {
+          state.date = savedDate;
+        }
+        
         state.fatigue = parsed.fatigue || state.fatigue;
         state.currentDay = parsed.currentDay || state.currentDay;
         state.lastImportBatch = parsed.lastImportBatch || state.lastImportBatch || null;
@@ -2375,21 +2429,36 @@ function loadState() {
         console.warn("⚠️ muscleAppState corrompu : reset safe.", e);
         // Reset "safe" sans casser l'app
         state.logs = assignStableIdsToLogs([]);
+        state.date = today; // Force la date du jour
       }
     }
 
     function saveState() {
-      localStorage.setItem(
-        "muscleAppState",
-        JSON.stringify({
+      try {
+        const dataToSave = {
           logs: state.logs,
           user: state.user,
           date: state.date,
           fatigue: state.fatigue,
           currentDay: state.currentDay,
-          lastImportBatch: state.lastImportBatch
-        })
-      );
+          lastImportBatch: state.lastImportBatch,
+          lastSaveTimestamp: new Date().toISOString()
+        };
+        
+        // Sauvegarde principale
+        localStorage.setItem("muscleAppState", JSON.stringify(dataToSave));
+        
+        // Sauvegarde de backup (en cas de corruption)
+        localStorage.setItem("muscleAppState_backup", JSON.stringify(dataToSave));
+        
+        console.log(`✅ Sauvegarde OK - ${state.logs.length} logs - Date: ${state.date}`);
+        
+        // Mettre à jour l'affichage de la date
+        updateDateDisplay();
+      } catch (e) {
+        console.error("❌ ERREUR de sauvegarde:", e);
+        alert("⚠️ Erreur lors de la sauvegarde des données. Vérifie l'espace de stockage disponible.");
+      }
     }
 
     function estimate1RM(weight, reps) {
@@ -2616,6 +2685,16 @@ function loadState() {
     userSelect.addEventListener("change", (e) => {
       state.user = e.target.value;
       saveState();
+      
+      console.log(`👤 Utilisateur changé: ${state.user}`);
+      
+      // Animation du sélecteur (plus subtile puisqu'il est dans le header)
+      e.target.style.transform = "scale(1.08)";
+      e.target.style.boxShadow = "0 0 30px rgba(0, 255, 136, 0.8), 0 0 50px rgba(0, 255, 136, 0.4)";
+      setTimeout(() => {
+        e.target.style.transform = "scale(1)";
+        e.target.style.boxShadow = "";
+      }, 300);
 
       if (bodyweightInput) {
         bodyweightInput.value = getUserBodyweight(state.user) || "";
@@ -2644,6 +2723,8 @@ function loadState() {
     dateInput.addEventListener("change", (e) => {
       state.date = e.target.value;
       saveState();
+      updateDateDisplay(); // Mettre à jour l'affichage
+      console.log(`📅 Date changée: ${state.date}`);
       renderEntrainement();
       renderLibre();
       renderHome();
@@ -3863,7 +3944,10 @@ function loadState() {
         mode: mode
       });
 
+      // ✅ Sauvegarde immédiate
       saveState();
+      console.log(`✅ Série libre ajoutée: ${exerciseId} - ${weightVal}kg x ${reps} reps (date: ${state.date})`);
+      
       if (weightInput) weightInput.value = "";
       if (repsInput) repsInput.value = "";
       if (rpeInput) rpeInput.value = "";
@@ -4832,7 +4916,10 @@ function loadState() {
           mode: mode
         });
 
+          // ✅ Sauvegarde immédiate
           saveState();
+          console.log(`✅ Série ajoutée: ${exerciseId} - ${weightVal}kg x ${reps} reps (date: ${state.date})`);
+          
           weightInput.value = "";
           repsInput.value = "";
           rpeInput.value = "";
@@ -4999,6 +5086,41 @@ function loadState() {
 
 
     // ========== INIT ==========
+    
+    // Fonction pour mettre à jour l'affichage de la date
+    function updateDateDisplay() {
+      const dateDisplay = document.getElementById("currentDateDisplay");
+      if (dateDisplay) {
+        const dateObj = new Date(state.date + "T00:00:00");
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        dateDisplay.textContent = dateObj.toLocaleDateString('fr-FR', options);
+      }
+    }
+    
+    // Fonction pour forcer le rafraîchissement de l'app
+    window.forceRefreshApp = function() {
+      const confirmRefresh = confirm("🔄 Rafraîchir l'application ?\n\nCela va recharger la page avec les dernières données sauvegardées.");
+      if (confirmRefresh) {
+        // Forcer la mise à jour du service worker
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(reg => reg.update());
+          });
+        }
+        
+        // Vider le cache et recharger
+        if ('caches' in window) {
+          caches.keys().then(keys => {
+            keys.forEach(key => caches.delete(key));
+          }).then(() => {
+            location.reload(true);
+          });
+        } else {
+          location.reload(true);
+        }
+      }
+    };
+    
     loadState();
     loadPlayerProfile();
     loadCustomExercises();
@@ -5006,6 +5128,7 @@ function loadState() {
     userSelect.value = state.user;
     dateInput.value = state.date;
     fatigueSelect.value = state.fatigue || "normal";
+    updateDateDisplay(); // Afficher la date dès le chargement
     renderHome();
     renderEntrainement();
     setupProfileInputs();
