@@ -1857,10 +1857,6 @@
           <span class="data-tools-label">Utilisateur :</span>
           <span class="data-tools-user" id="dataToolsUser"></span>
         </div>
-        
-        <div class="data-tools-row">
-          <button class="export-btn" id="forceTodayBtn" style="background: rgba(0, 255, 136, 0.2); border-color: rgba(0, 255, 136, 0.4);">📅 Forcer la date à aujourd'hui</button>
-        </div>
 
         <div class="data-tools-row">
           <label class="data-tools-label" for="deleteFrom">Du</label>
@@ -2365,6 +2361,17 @@
     }
 
     function normalizeLog(raw) {
+      // ✅ Migration "ancienne version" :
+      // Avant, certains logs n'avaient pas de champ "mode".
+      // Et comme getLogMode() retombait sur recommendedMode (souvent "per_arm"),
+      // ça doublait la charge (w*2) et faisait exploser les stats (ex: BIC = 100).
+      //
+      // Ici, on déduit un mode sûr pour les vieux logs :
+      // - Abdos / core -> virtual
+      // - Bodyweight (ex: dips) -> bodyweight
+      // - Sinon -> total (par défaut, car historiquement tu notais souvent la charge totale).
+      const inferredMode = raw.mode ? raw.mode : inferLegacyMode(raw.exerciseId, raw.weight, raw.user);
+
       return {
         id: raw.id || null,
         user: raw.user,
@@ -2373,7 +2380,7 @@
         weight: Number(raw.weight) || 0,
         reps: Number(raw.reps) || 0,
         rpe: raw.rpe != null ? Number(raw.rpe) : null,
-        mode: raw.mode || null
+        mode: inferredMode
       };
     }
 
@@ -2548,15 +2555,30 @@ function loadState() {
     // ========== GESTION DES MODES DE CHARGE ==========
     // Retourne le mode de log ("total", "per_arm", "bodyweight", "virtual")
     // avec un fallback propre pour les anciens logs.
-    function getLogMode(log) {
-      if (log.mode) return log.mode;
+    function inferLegacyMode(exerciseId, weight, user) {
+      const exId = String(exerciseId || "");
+      const w = Number(weight) || 0;
 
-      // Si pas de mode dans le log (ancienne version),
-      // on prend le recommendedMode de l'exercice (programme OU custom), sinon "total".
-      const def = getExerciseDefinition(log.exerciseId);
-      return (def && def.recommendedMode) ? def.recommendedMode : "total";
+      const def = getExerciseDefinition(exId);
+      const rec = (def && def.recommendedMode) ? def.recommendedMode : null;
+      const muscle = (def && def.muscle) ? def.muscle : (exerciseToMuscle[exId] || null);
+
+      // Abdos / core : on force "virtual" pour éviter les 0 et rester cohérent avec l'historique.
+      if (rec === "virtual" || muscle === "Abdos" || exId === "core_combo") return "virtual";
+
+      // Exercices poids du corps : si aucun poids n'était saisi dans les anciennes versions,
+      // on considère "bodyweight".
+      if ((rec === "bodyweight" || exId === "triceps_choice") && w <= 0) return "bodyweight";
+
+      // ✅ Default sûr pour legacy : "total"
+      // (sinon, recommendedMode="per_arm" double la charge et fausse la stat)
+      return "total";
     }
 
+    function getLogMode(log) {
+      if (log.mode) return log.mode;
+      return inferLegacyMode(log.exerciseId, log.weight, log.user);
+    }
 
     // Poids effectif pour tout ce qui est "volume" (tonnage, IPG, etc.)
     function getEffectiveWeightForVolume(log) {
@@ -2785,12 +2807,6 @@ function loadState() {
             alert("⚠️ Fichier invalide : pas de propriété 'logs'.");
             return;
           }
-          
-          // 🔥 PROTECTION: Ignorer la date du fichier JSON - on garde toujours la date actuelle
-          const importedDate = json.date;
-          if (importedDate) {
-            console.warn(`⚠️ Date ignorée du JSON: ${importedDate} - On garde la date actuelle`);
-          }
 
           // 1) Normalisation + IDs (conserve les séries identiques)
           //    + "batch" pour pouvoir annuler un import en 1 clic
@@ -2821,18 +2837,7 @@ function loadState() {
           state.logs = Array.from(map.values());
           state.lastImportBatch = batchId;
 
-          // 🔥 CORRECTION CRITIQUE: Forcer la date du jour après l'import
-          const today = new Date().toISOString().split("T")[0];
-          state.date = today;
-          
-          console.log(`✅ Import terminé - Date forcée: ${today}`);
-
           saveState();
-          
-          // 🔥 Synchroniser le champ date
-          if (dateInput) dateInput.value = today;
-          updateDateDisplay();
-          
           renderEntrainement();
           renderLibre();
           renderHome();
@@ -2841,7 +2846,7 @@ function loadState() {
           renderProgression();
           updateDataToolsUI();
 
-          alert(`✅ Import terminé (fusion des données réussie).\n📅 Date mise à jour: ${today}`);
+          alert("✅ Import terminé (fusion des données réussie).");
         } catch (err) {
           console.error(err);
           alert("⚠️ Erreur lors de la lecture du fichier JSON.");
@@ -5087,7 +5092,6 @@ function loadState() {
           const delBtn = document.getElementById("deleteRangeBtn");
           const undoBtn = document.getElementById("undoImportBtn");
           const wipeBtn = document.getElementById("wipeAllBtn");
-          const forceTodayBtn = document.getElementById("forceTodayBtn");
 
           if (delBtn) {
             delBtn.addEventListener("click", () => {
@@ -5103,26 +5107,6 @@ function loadState() {
 
           if (wipeBtn) {
             wipeBtn.addEventListener("click", () => wipeAllData());
-          }
-          
-          if (forceTodayBtn) {
-            forceTodayBtn.addEventListener("click", () => {
-              const today = new Date().toISOString().split("T")[0];
-              const oldDate = state.date;
-              
-              state.date = today;
-              if (dateInput) dateInput.value = today;
-              
-              saveState();
-              updateDateDisplay();
-              
-              renderEntrainement();
-              renderLibre();
-              renderHome();
-              renderHistory();
-              
-              alert(`✅ Date mise à jour!\n\n📅 Ancienne date: ${oldDate}\n📅 Nouvelle date: ${today}`);
-            });
           }
 
           updateDataToolsUI();
