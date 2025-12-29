@@ -1785,225 +1785,6 @@
   </div>
 
   <script>
-    // ========== PROGRAM DATA (from your file) ==========
-    const legacyProgram = {
-      A: {
-        name: "Lundi — Pecs / Triceps / Épaules",
-        exercises: [
-
-          {
-            id: "chest_press",
-            name: "Chest Press Convergente",
-            muscle: "Pecs",
-            refMax: 100,
-            gifUrl: "chest_press.gif",
-            notesArnaud: "4×8–10 • RPE 7.5–9 • Repos 90s • Charge progressive • Pas à l’échec systématique.",
-            notesDancho: "4×8–10 • Superset pompes • Tempo rapide • Repos 45–60s • Pompes non à l’échec.",
-            recommendedMode: "total"
-          },
-
-          {
-            id: "db_incline_press",
-            name: "Développé incliné haltères (20–30°)",
-            muscle: "Pecs",
-            refMax: 60,
-            gifUrl: "db_press_neutral.gif",
-            notesArnaud: "4×10–12 • Inclinaison max 30° • RPE ≤9 • Contrôle total • Repos 90s.",
-            notesDancho: "4×10–12 • Tempo lent 3–1–2 • Charge modérée • Focus sensation pecs.",
-            recommendedMode: "per_arm"
-          },
-
-          {
-            id: "cable_fly_any",
-            name: "Écartés poulie / Pec Deck",
-            muscle: "Pecs",
-            refMax: 40,
-            gifUrl: "cable_fly_any.gif",
-            notesArnaud: "3×12–15 • Repos complet • Étirement contrôlé • Aucun balancement.",
-            notesDancho: "3×12–15 • Superset dips • Amplitude partielle • Pas de dips profonds si gêne épaules.",
-            recommendedMode: "total"
-          },
-
-          {
-            id: "triceps_choice",
-            name: "Dips",
-            muscle: "Triceps",
-            refMax: 60,
-            gifUrl: "dips.gif",
-            notesArnaud: "3×10–12 • Focus triceps • Extension poulie recommandée si coudes sensibles.",
-            notesDancho: "3×10–12 • Superset extension triceps • Rythme soutenu.",
-            recommendedMode: "bodyweight"
-          },
-
-          {
-            id: "lat_raise",
-            name: "Élévations latérales",
-            muscle: "Épaules",
-            refMax: 20,
-            gifUrl: "lat_raise.gif",
-            notesArnaud: "3×15 • Strict • RPE 8–9 • Charge progressive.",
-            notesDancho: "3×15 • Superset gainage 1 min • Pas d’élan.",
-            recommendedMode: "per_arm"
-          },
-
-          {
-            id: "triceps_overhead",
-            name: "Extension triceps overhead à la poulie",
-            muscle: "Triceps",
-            refMax: 40,
-            gifUrl: "triceps_overhead.gif",
-            notesArnaud: "3×12–15 • RPE 8–9 • Étirement contrôlé • Pas d’échec • Repos 45–60s.",
-            notesDancho: "3×12–15 • Finisher bras • Brûlure recherchée • Tempo continu.",
-            recommendedMode: "per_arm"
-          }
-        ]
-      },
-
-      B: {
-        name: "Mercredi — Dos / Biceps / Abdos",
-        exercises: [
-
-          {
-            id: "lat_pulldown",
-            name: "Tractions OU Tirage Vertical",
-            muscle: "Dos",
-            refMax: 100,
-            gifUrl: "lat_pulldown.gif",
-            notesArnaud: "4×8–10 • Tirage machine prioritaire • Tractions lestées seulement si fraîcheur ++ • Repos 90–120s.",
-            notesDancho: "4×8–10 • Superset rowing TRX • Tempo contrôlé • Repos 60s.",
-            recommendedMode: "total"
-          },
-
-          {
-            id: "row_machine",
-            name: "Rowing (machine ou haltères appuyés)",
-            muscle: "Dos",
-            refMax: 100,
-            gifUrl: "row_machine.gif",
-            notesArnaud: "4×10–12 • Machine ou haltères appuyés • Éviter rowing barre lourd • RPE ≤9.",
-            notesDancho: "4×10–12 • Tempo lent • Contraction maximale • Superset possible.",
-            recommendedMode: "per_arm"
-          },
-
-          {
-            id: "low_row",
-            name: "Tirage horizontal poulie",
-            muscle: "Dos",
-            refMax: 100,
-            gifUrl: "low_row.gif",
-            notesArnaud: "3×12–15 • Repos complet • Trajectoire propre.",
-            notesDancho: "3×12–15 • Superset curl biceps • Repos 45–60s.",
-            recommendedMode: "total"
-          },
-
-          {
-            id: "incline_curl",
-            name: "Curl barre ou haltères",
-            muscle: "Biceps",
-            refMax: 30,
-            gifUrl: "incline_curl.gif",
-            notesArnaud: "3×10–12 • Charges modérées • Aucun balancement.",
-            notesDancho: "3×10–12 • Superset crunchs • Rythme élevé.",
-            recommendedMode: "per_arm"
-          },
-
-          {
-            id: "core_combo",
-            name: "Crunchs + Gainage",
-            muscle: "Abdos",
-            refMax: null,
-            gifUrl: "abs.gif",
-            notesArnaud: "3 séries • 20 crunchs + gainage long • Focus stabilité.",
-            notesDancho: "3 séries • Gainage lesté ou instable • Intensité max.",
-            recommendedMode: "virtual"
-          },
-
-          {
-            id: "spider_curl",
-            name: "Curl pupitre / Spider curl",
-            muscle: "Biceps",
-            refMax: 30,
-            gifUrl: "spider_curl.gif",
-            notesArnaud: "3×10–12 • Strict • Aucun élan • RPE 8–9 • Repos 45–60s.",
-            notesDancho: "3×10–12 • Dernier set drop-set possible • Contraction maximale.",
-            recommendedMode: "per_arm"
-          }
-        ]
-      },
-
-      C: {
-        name: "Vendredi — Jambes / Full Body / Cardio",
-        exercises: [
-
-          {
-            id: "hack",
-            name: "Hack Squat",
-            muscle: "Quadriceps",
-            refMax: 140,
-            gifUrl: "hack.gif",
-            notesArnaud: "4×8–10 • Lourd • Repos 90s • Mouvement phare • Posture stable.",
-            notesDancho: "4×8–10 • Superset fentes statiques • Charge modérée • Volume élevé.",
-            recommendedMode: "total"
-          },
-
-          {
-            id: "leg_press",
-            name: "Presse à cuisses",
-            muscle: "Quadriceps",
-            refMax: 350,
-            gifUrl: "leg_press.gif",
-            notesArnaud: "4×10–12 • Charges progressives • Repos 120s.",
-            notesDancho: "4×10–12 • Superset mollets • Attention fatigue quadriceps.",
-            recommendedMode: "total"
-          },
-
-          {
-            id: "rdl",
-            name: "Soulevé de terre jambes tendues",
-            muscle: "Ischios",
-            refMax: 100,
-            gifUrl: "rdl.gif",
-            notesArnaud: "3×12 • RPE ≤8.5 • Repos complet • Jamais à l’échec.",
-            notesDancho: "3×12 • Tempo lent • Stretch contrôlé.",
-            recommendedMode: "total"
-          },
-
-          {
-            id: "walking_lunges",
-            name: "Fentes marchées",
-            muscle: "Jambes",
-            refMax: 60,
-            gifUrl: "bulgarian_split.gif",
-            notesArnaud: "3×12 / jambe • Charges modérées • Contrôle.",
-            notesDancho: "3×12 / jambe • Superset gainage dynamique • Rythme élevé.",
-            recommendedMode: "per_arm"
-          },
-
-          {
-            id: "hiit",
-            name: "Cardio HIIT 30s / 30s",
-            muscle: "Cardio",
-            refMax: null,
-            gifUrl: null,
-            notesArnaud: "15 min • Intensité modérée • À éviter si jambes déjà vides.",
-            notesDancho: "15 min • Intensité maximale 🔥",
-            recommendedMode: "bodyweight"
-          },
-
-          {
-            id: "hammer_curl_cable",
-            name: "Curl marteau à la poulie",
-            muscle: "Biceps",
-            refMax: 35,
-            gifUrl: "hammer_curl.gif",
-            notesArnaud: "3×12–15 • RPE 7–8 • Optionnel si fatigue haute • Repos 30–45s.",
-            notesDancho: "3×12–15 • Pompe maximale • Enchaînable avant cardio.",
-            recommendedMode: "per_arm"
-          }
-        ]
-      }
-    };
-
     // ========== PROGRAM DATA (from Excel: 5 jours) ==========
     const program = {
       A: {
@@ -2015,8 +1796,6 @@
             muscle: "Pecs",
             refMax: 66,
             gifUrl: "chest_press.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2025,8 +1804,6 @@
             muscle: "Pecs",
             refMax: 55,
             gifUrl: "db_press_neutral.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2035,8 +1812,6 @@
             muscle: "Pecs",
             refMax: 25,
             gifUrl: "cable_fly_any.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2045,8 +1820,6 @@
             muscle: "Biceps",
             refMax: 20,
             gifUrl: "curl_inverse.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2055,8 +1828,6 @@
             muscle: "Épaules",
             refMax: 16,
             gifUrl: "lat_raise.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2065,8 +1836,6 @@
             muscle: "Triceps",
             refMax: null,
             gifUrl: "dips.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "bodyweight"
           },
           {
@@ -2075,8 +1844,6 @@
             muscle: "Triceps",
             refMax: 25,
             gifUrl: "triceps_overhead.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           }
         ]
@@ -2090,8 +1857,6 @@
             muscle: "Dos",
             refMax: null,
             gifUrl: "lat_pulldown.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "bodyweight"
           },
           {
@@ -2100,8 +1865,6 @@
             muscle: "Dos",
             refMax: 55,
             gifUrl: "low_row.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2110,8 +1873,6 @@
             muscle: "Biceps",
             refMax: 27.5,
             gifUrl: "spider_curl.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2120,8 +1881,6 @@
             muscle: "Biceps",
             refMax: 25,
             gifUrl: "curl_marteau.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "per_arm"
           }
         ]
@@ -2135,8 +1894,6 @@
             muscle: "Quadriceps",
             refMax: 60,
             gifUrl: "squat.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2145,8 +1902,6 @@
             muscle: "Dos",
             refMax: 50,
             gifUrl: "rdl.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2155,8 +1910,6 @@
             muscle: "Quadriceps",
             refMax: 80,
             gifUrl: "leg_press.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2165,8 +1918,6 @@
             muscle: "Quadriceps",
             refMax: 10,
             gifUrl: "bulgarian_split.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2175,8 +1926,6 @@
             muscle: "Quadriceps",
             refMax: 50,
             gifUrl: "leg_extension.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2185,8 +1934,6 @@
             muscle: "Ischios",
             refMax: 30,
             gifUrl: "leg_curl.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           }
         ]
@@ -2200,8 +1947,6 @@
             muscle: "Pecs",
             refMax: 66,
             gifUrl: "chest_press.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2210,8 +1955,6 @@
             muscle: "Épaules",
             refMax: 10,
             gifUrl: "lat_raise.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2220,8 +1963,6 @@
             muscle: "Dos",
             refMax: 55,
             gifUrl: "low_row.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2230,8 +1971,6 @@
             muscle: "Biceps",
             refMax: 15,
             gifUrl: "curl_biceps.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2240,8 +1979,6 @@
             muscle: "Biceps",
             refMax: 20,
             gifUrl: "curl_inverse.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           }
         ]
@@ -2255,8 +1992,6 @@
             muscle: "Dos",
             refMax: null,
             gifUrl: "lombaires.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "bodyweight"
           },
           {
@@ -2265,8 +2000,6 @@
             muscle: "Dos",
             refMax: 27.5,
             gifUrl: "row_machine.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2275,8 +2008,6 @@
             muscle: "Dos",
             refMax: null,
             gifUrl: "lat_pulldown.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "bodyweight"
           },
           {
@@ -2285,8 +2016,6 @@
             muscle: "Épaules",
             refMax: 10,
             gifUrl: "oiseau.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "per_arm"
           },
           {
@@ -2295,8 +2024,6 @@
             muscle: "Triceps",
             refMax: 25,
             gifUrl: "barre_front.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2305,8 +2032,6 @@
             muscle: "Biceps",
             refMax: 12.5,
             gifUrl: "incline_curl.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "total"
           },
           {
@@ -2315,8 +2040,6 @@
             muscle: "Abdos",
             refMax: null,
             gifUrl: "crunch_poulie_abs.gif",
-            notesArnaud: "",
-            notesDancho: "",
             recommendedMode: "virtual"
           }
         ]
@@ -2335,6 +2058,28 @@
       "Abdos": 60,    // à traiter à part
       "Cardio": 0    // à traiter à part
     };
+
+    // 🔧 Références spécifiques pour certains exos d’épaules
+    // BUT: éviter de comparer les élévations latérales à la réf "Épaules: 70" (presse/développé)
+    const shoulderExerciseRef = {
+      // Réf exprimée en "charge totale effective"
+      // (donc si tu logges en per_arm, le 1RM est déjà doublé par getEffectiveWeightFor1RM)
+      "lat_raise": 25,
+      "elevations_laterales_poulie": 25
+    };
+
+    function getRefForScore(exerciseId, muscle) {
+      if (muscle === "Épaules") {
+        if (shoulderExerciseRef[exerciseId]) return shoulderExerciseRef[exerciseId];
+
+        // fallback si tu crées d’autres variantes d’élévations latérales
+        if (typeof exerciseId === "string" &&
+            (exerciseId.includes("elevations_laterales") || exerciseId.includes("lat_raise"))) {
+          return 25;
+        }
+      }
+      return musclePerformanceRef[muscle] || 0;
+    }
 
     // Mapping exercice → muscle (utilisé partout, pas seulement dans les stats)
     let exerciseToMuscle = {};
@@ -3179,14 +2924,18 @@ function loadState() {
 
             if (mLogs.length === 0) { byMuscle[muscle] = 0; return; }
 
-            let best1RM = 0;
-            mLogs.forEach(l => { 
-              const est = estimateLog1RM(l); 
-              if (est > best1RM) best1RM = est; 
+            let bestRatio = 0;
+
+            mLogs.forEach(l => {
+              const est = estimateLog1RM(l);
+              const ref = getRefForScore(l.exerciseId, muscle);
+              if (!ref || est <= 0) return;
+
+              const ratio = est / ref;       // <- réf spéciale si élévations latérales
+              if (ratio > bestRatio) bestRatio = ratio;
             });
 
-            const ref = musclePerformanceRef[muscle] || 0;
-            byMuscle[muscle] = ref ? clamp((best1RM / ref) * 100, 0, 100) : 0;
+            byMuscle[muscle] = clamp(bestRatio * 100, 0, 100);
           });
 
           return byMuscle;
@@ -3247,8 +2996,8 @@ function loadState() {
 
             // On récupère le muscle associé
             const muscle = def.muscle || exerciseToMuscle[exerciseId];
-            const muscleRef = musclePerformanceRef[muscle] || 0;
-            if (!muscleRef) return;
+            const scoreRef = getRefForScore(exerciseId, muscle);
+            if (!scoreRef) return;
 
             // meilleure "force" sur 30 jours (1RM estimée)
             let best1RM = 0;
@@ -3260,7 +3009,7 @@ function loadState() {
             if (best1RM <= 0) return;
 
             // Ratio par rapport à la même réf que le muscle
-            const ratio = clamp(best1RM / muscleRef, 0, 1);
+            const ratio = clamp(best1RM / scoreRef, 0, 1);
             const score = Math.round(ratio * 100);  // même logique que les muscles
 
             results.push({
@@ -4152,19 +3901,18 @@ function loadState() {
 
         if (logs.length === 0) return 0;
 
-        let best1RM = 0;
+        let bestRatio = 0;
+
         logs.forEach(l => {
-          const w1 = getEffectiveWeightFor1RM(l);
-          const r = Number(l.reps) || 0;
-          const est = estimate1RM(w1, r);
-          if (est > best1RM) best1RM = est;
+          const est = estimateLog1RM(l);
+          const ref = getRefForScore(l.exerciseId, muscle);
+          if (!ref || est <= 0) return;
+
+          const ratio = est / ref;
+          if (ratio > bestRatio) bestRatio = ratio;
         });
 
-        const ref = musclePerformanceRef[muscle] || 0;
-        if (!ref) return 0;
-
-        const score = (best1RM / ref) * 100;
-        return clamp(score, 0, 100); // 0–100%
+        return clamp(bestRatio * 100, 0, 100); // 0–100%
       }
 
       const dataArnaud = muscles.map(m => computeMusclePerformance("Arnaud", m));
