@@ -1692,9 +1692,11 @@
       </div>
 
       <div class="day-tabs">
-        <button class="day-btn active" data-day="A">Séance A</button>
-        <button class="day-btn" data-day="B">Séance B</button>
-        <button class="day-btn" data-day="C">Séance C</button>
+        <button class="day-btn active" data-day="A">Lundi</button>
+        <button class="day-btn" data-day="B">Mardi</button>
+        <button class="day-btn" data-day="C">Mercredi</button>
+        <button class="day-btn" data-day="D">Jeudi</button>
+        <button class="day-btn" data-day="E">Vendredi</button>
       </div>
 
       <div id="exercisesContainer"></div>
@@ -1784,223 +1786,542 @@
 
   <script>
     // ========== PROGRAM DATA (from your file) ==========
+    const legacyProgram = {
+      A: {
+        name: "Lundi — Pecs / Triceps / Épaules",
+        exercises: [
+
+          {
+            id: "chest_press",
+            name: "Chest Press Convergente",
+            muscle: "Pecs",
+            refMax: 100,
+            gifUrl: "chest_press.gif",
+            notesArnaud: "4×8–10 • RPE 7.5–9 • Repos 90s • Charge progressive • Pas à l’échec systématique.",
+            notesDancho: "4×8–10 • Superset pompes • Tempo rapide • Repos 45–60s • Pompes non à l’échec.",
+            recommendedMode: "total"
+          },
+
+          {
+            id: "db_incline_press",
+            name: "Développé incliné haltères (20–30°)",
+            muscle: "Pecs",
+            refMax: 60,
+            gifUrl: "db_press_neutral.gif",
+            notesArnaud: "4×10–12 • Inclinaison max 30° • RPE ≤9 • Contrôle total • Repos 90s.",
+            notesDancho: "4×10–12 • Tempo lent 3–1–2 • Charge modérée • Focus sensation pecs.",
+            recommendedMode: "per_arm"
+          },
+
+          {
+            id: "cable_fly_any",
+            name: "Écartés poulie / Pec Deck",
+            muscle: "Pecs",
+            refMax: 40,
+            gifUrl: "cable_fly_any.gif",
+            notesArnaud: "3×12–15 • Repos complet • Étirement contrôlé • Aucun balancement.",
+            notesDancho: "3×12–15 • Superset dips • Amplitude partielle • Pas de dips profonds si gêne épaules.",
+            recommendedMode: "total"
+          },
+
+          {
+            id: "triceps_choice",
+            name: "Dips",
+            muscle: "Triceps",
+            refMax: 60,
+            gifUrl: "dips.gif",
+            notesArnaud: "3×10–12 • Focus triceps • Extension poulie recommandée si coudes sensibles.",
+            notesDancho: "3×10–12 • Superset extension triceps • Rythme soutenu.",
+            recommendedMode: "bodyweight"
+          },
+
+          {
+            id: "lat_raise",
+            name: "Élévations latérales",
+            muscle: "Épaules",
+            refMax: 20,
+            gifUrl: "lat_raise.gif",
+            notesArnaud: "3×15 • Strict • RPE 8–9 • Charge progressive.",
+            notesDancho: "3×15 • Superset gainage 1 min • Pas d’élan.",
+            recommendedMode: "per_arm"
+          },
+
+          {
+            id: "triceps_overhead",
+            name: "Extension triceps overhead à la poulie",
+            muscle: "Triceps",
+            refMax: 40,
+            gifUrl: "triceps_overhead.gif",
+            notesArnaud: "3×12–15 • RPE 8–9 • Étirement contrôlé • Pas d’échec • Repos 45–60s.",
+            notesDancho: "3×12–15 • Finisher bras • Brûlure recherchée • Tempo continu.",
+            recommendedMode: "per_arm"
+          }
+        ]
+      },
+
+      B: {
+        name: "Mercredi — Dos / Biceps / Abdos",
+        exercises: [
+
+          {
+            id: "lat_pulldown",
+            name: "Tractions OU Tirage Vertical",
+            muscle: "Dos",
+            refMax: 100,
+            gifUrl: "lat_pulldown.gif",
+            notesArnaud: "4×8–10 • Tirage machine prioritaire • Tractions lestées seulement si fraîcheur ++ • Repos 90–120s.",
+            notesDancho: "4×8–10 • Superset rowing TRX • Tempo contrôlé • Repos 60s.",
+            recommendedMode: "total"
+          },
+
+          {
+            id: "row_machine",
+            name: "Rowing (machine ou haltères appuyés)",
+            muscle: "Dos",
+            refMax: 100,
+            gifUrl: "row_machine.gif",
+            notesArnaud: "4×10–12 • Machine ou haltères appuyés • Éviter rowing barre lourd • RPE ≤9.",
+            notesDancho: "4×10–12 • Tempo lent • Contraction maximale • Superset possible.",
+            recommendedMode: "per_arm"
+          },
+
+          {
+            id: "low_row",
+            name: "Tirage horizontal poulie",
+            muscle: "Dos",
+            refMax: 100,
+            gifUrl: "low_row.gif",
+            notesArnaud: "3×12–15 • Repos complet • Trajectoire propre.",
+            notesDancho: "3×12–15 • Superset curl biceps • Repos 45–60s.",
+            recommendedMode: "total"
+          },
+
+          {
+            id: "incline_curl",
+            name: "Curl barre ou haltères",
+            muscle: "Biceps",
+            refMax: 30,
+            gifUrl: "incline_curl.gif",
+            notesArnaud: "3×10–12 • Charges modérées • Aucun balancement.",
+            notesDancho: "3×10–12 • Superset crunchs • Rythme élevé.",
+            recommendedMode: "per_arm"
+          },
+
+          {
+            id: "core_combo",
+            name: "Crunchs + Gainage",
+            muscle: "Abdos",
+            refMax: null,
+            gifUrl: "abs.gif",
+            notesArnaud: "3 séries • 20 crunchs + gainage long • Focus stabilité.",
+            notesDancho: "3 séries • Gainage lesté ou instable • Intensité max.",
+            recommendedMode: "virtual"
+          },
+
+          {
+            id: "spider_curl",
+            name: "Curl pupitre / Spider curl",
+            muscle: "Biceps",
+            refMax: 30,
+            gifUrl: "spider_curl.gif",
+            notesArnaud: "3×10–12 • Strict • Aucun élan • RPE 8–9 • Repos 45–60s.",
+            notesDancho: "3×10–12 • Dernier set drop-set possible • Contraction maximale.",
+            recommendedMode: "per_arm"
+          }
+        ]
+      },
+
+      C: {
+        name: "Vendredi — Jambes / Full Body / Cardio",
+        exercises: [
+
+          {
+            id: "hack",
+            name: "Hack Squat",
+            muscle: "Quadriceps",
+            refMax: 140,
+            gifUrl: "hack.gif",
+            notesArnaud: "4×8–10 • Lourd • Repos 90s • Mouvement phare • Posture stable.",
+            notesDancho: "4×8–10 • Superset fentes statiques • Charge modérée • Volume élevé.",
+            recommendedMode: "total"
+          },
+
+          {
+            id: "leg_press",
+            name: "Presse à cuisses",
+            muscle: "Quadriceps",
+            refMax: 350,
+            gifUrl: "leg_press.gif",
+            notesArnaud: "4×10–12 • Charges progressives • Repos 120s.",
+            notesDancho: "4×10–12 • Superset mollets • Attention fatigue quadriceps.",
+            recommendedMode: "total"
+          },
+
+          {
+            id: "rdl",
+            name: "Soulevé de terre jambes tendues",
+            muscle: "Ischios",
+            refMax: 100,
+            gifUrl: "rdl.gif",
+            notesArnaud: "3×12 • RPE ≤8.5 • Repos complet • Jamais à l’échec.",
+            notesDancho: "3×12 • Tempo lent • Stretch contrôlé.",
+            recommendedMode: "total"
+          },
+
+          {
+            id: "walking_lunges",
+            name: "Fentes marchées",
+            muscle: "Jambes",
+            refMax: 60,
+            gifUrl: "bulgarian_split.gif",
+            notesArnaud: "3×12 / jambe • Charges modérées • Contrôle.",
+            notesDancho: "3×12 / jambe • Superset gainage dynamique • Rythme élevé.",
+            recommendedMode: "per_arm"
+          },
+
+          {
+            id: "hiit",
+            name: "Cardio HIIT 30s / 30s",
+            muscle: "Cardio",
+            refMax: null,
+            gifUrl: null,
+            notesArnaud: "15 min • Intensité modérée • À éviter si jambes déjà vides.",
+            notesDancho: "15 min • Intensité maximale 🔥",
+            recommendedMode: "bodyweight"
+          },
+
+          {
+            id: "hammer_curl_cable",
+            name: "Curl marteau à la poulie",
+            muscle: "Biceps",
+            refMax: 35,
+            gifUrl: "hammer_curl.gif",
+            notesArnaud: "3×12–15 • RPE 7–8 • Optionnel si fatigue haute • Repos 30–45s.",
+            notesDancho: "3×12–15 • Pompe maximale • Enchaînable avant cardio.",
+            recommendedMode: "per_arm"
+          }
+        ]
+      }
+    };
+
+    // ========== PROGRAM DATA (from Excel: 5 jours) ==========
     const program = {
-  A: {
-    name: "Lundi — Pecs / Triceps / Épaules",
-    exercises: [
-
-      {
-        id: "chest_press",
-        name: "Chest Press Convergente",
-        muscle: "Pecs",
-        refMax: 100,
-        gifUrl: "chest_press.gif",
-        notesArnaud: "4×8–10 • RPE 7.5–9 • Repos 90s • Charge progressive • Pas à l’échec systématique.",
-        notesDancho: "4×8–10 • Superset pompes • Tempo rapide • Repos 45–60s • Pompes non à l’échec.",
-        recommendedMode: "total"
+      A: {
+        name: "Lundi — Pecs / Épaules / Biceps / Triceps",
+        exercises: [
+          {
+            id: "presse_convergente",
+            name: "Presse convergente",
+            muscle: "Pecs",
+            refMax: 66,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "developpe_incline_halteres",
+            name: "Développé incliné halteres",
+            muscle: "Pecs",
+            refMax: 55,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "ecarte_poulie_haute_bas",
+            name: "écarté poulie haute -> bas",
+            muscle: "Pecs",
+            refMax: 25,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "superset_poulie_avant_bras",
+            name: "Superset Poulie avant bras",
+            muscle: "Biceps",
+            refMax: 20,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "elevations_laterales",
+            name: "élévations latérales",
+            muscle: "Épaules",
+            refMax: 16,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "dips",
+            name: "dips",
+            muscle: "Triceps",
+            refMax: null,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "bodyweight"
+          },
+          {
+            id: "extension_overhead_triceps",
+            name: "extension overhead triceps",
+            muscle: "Triceps",
+            refMax: 25,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          }
+        ]
       },
-
-      {
-        id: "db_incline_press",
-        name: "Développé incliné haltères (20–30°)",
-        muscle: "Pecs",
-        refMax: 60,
-        gifUrl: "db_press_neutral.gif",
-        notesArnaud: "4×10–12 • Inclinaison max 30° • RPE ≤9 • Contrôle total • Repos 90s.",
-        notesDancho: "4×10–12 • Tempo lent 3–1–2 • Charge modérée • Focus sensation pecs.",
-        recommendedMode: "per_arm"
+      B: {
+        name: "Mardi — Dos / Biceps",
+        exercises: [
+          {
+            id: "tractions",
+            name: "Tractions",
+            muscle: "Dos",
+            refMax: null,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "bodyweight"
+          },
+          {
+            id: "tirage_horizontal",
+            name: "Tirage horizontal",
+            muscle: "Dos",
+            refMax: 55,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "curl_barre_ez",
+            name: "Curl barre EZ",
+            muscle: "Biceps",
+            refMax: 27.5,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "curl_halteres_marteau",
+            name: "Curl haltères marteau",
+            muscle: "Biceps",
+            refMax: 25,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "per_arm"
+          }
+        ]
       },
-
-      {
-        id: "cable_fly_any",
-        name: "Écartés poulie / Pec Deck",
-        muscle: "Pecs",
-        refMax: 40,
-        gifUrl: "cable_fly_any.gif",
-        notesArnaud: "3×12–15 • Repos complet • Étirement contrôlé • Aucun balancement.",
-        notesDancho: "3×12–15 • Superset dips • Amplitude partielle • Pas de dips profonds si gêne épaules.",
-        recommendedMode: "total"
+      C: {
+        name: "Mercredi — Dos / Quadriceps / Ischios",
+        exercises: [
+          {
+            id: "squat_barre",
+            name: "Squat barre",
+            muscle: "Quadriceps",
+            refMax: 60,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "souleve_de_terre",
+            name: "Soulevé de terre",
+            muscle: "Dos",
+            refMax: 50,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "presse_a_cuisses",
+            name: "Presse à cuisses",
+            muscle: "Quadriceps",
+            refMax: 80,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "fentes_bulgares",
+            name: "Fentes bulgares",
+            muscle: "Quadriceps",
+            refMax: 10,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "leg_extension",
+            name: "Leg extension",
+            muscle: "Quadriceps",
+            refMax: 50,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "leg_curl",
+            name: "Leg curl",
+            muscle: "Ischios",
+            refMax: 30,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          }
+        ]
       },
-
-      {
-        id: "triceps_choice",
-        name: "Dips",
-        muscle: "Triceps",
-        refMax: 60,
-        gifUrl: "dips.gif",
-        notesArnaud: "3×10–12 • Focus triceps • Extension poulie recommandée si coudes sensibles.",
-        notesDancho: "3×10–12 • Superset extension triceps • Rythme soutenu.",
-        recommendedMode: "bodyweight"
+      D: {
+        name: "Jeudi — Pecs / Dos / Épaules / Biceps",
+        exercises: [
+          {
+            id: "chess_press",
+            name: "Chess press",
+            muscle: "Pecs",
+            refMax: 66,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "elevations_laterales_poulie",
+            name: "Élévations latérales poulie",
+            muscle: "Épaules",
+            refMax: 10,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "tirage_horizontal_2",
+            name: "Tirage  horizontal",
+            muscle: "Dos",
+            refMax: 55,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "superset_curl_biceps_poulie",
+            name: "Superset Curl biceps poulie",
+            muscle: "Biceps",
+            refMax: 15,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "superset_poulie_avant_bras_2",
+            name: "Superset Poulie avant bras",
+            muscle: "Biceps",
+            refMax: 20,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          }
+        ]
       },
-
-      {
-        id: "lat_raise",
-        name: "Élévations latérales",
-        muscle: "Épaules",
-        refMax: 20,
-        gifUrl: "lat_raise.gif",
-        notesArnaud: "3×15 • Strict • RPE 8–9 • Charge progressive.",
-        notesDancho: "3×15 • Superset gainage 1 min • Pas d’élan.",
-        recommendedMode: "per_arm"
-      },
-
-      {
-        id: "triceps_overhead",
-        name: "Extension triceps overhead à la poulie",
-        muscle: "Triceps",
-        refMax: 40,
-        gifUrl: "triceps_overhead.gif",
-        notesArnaud: "3×12–15 • RPE 8–9 • Étirement contrôlé • Pas d’échec • Repos 45–60s.",
-        notesDancho: "3×12–15 • Finisher bras • Brûlure recherchée • Tempo continu.",
-        recommendedMode: "per_arm"
+      E: {
+        name: "Vendredi — Dos / Épaules / Biceps / Triceps / Abdos",
+        exercises: [
+          {
+            id: "extension_lombaires",
+            name: "Extension lombaires",
+            muscle: "Dos",
+            refMax: null,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "bodyweight"
+          },
+          {
+            id: "rowing_haltere_unilateral",
+            name: "Rowing haltère unilatéral",
+            muscle: "Dos",
+            refMax: 27.5,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "tractions_2",
+            name: "Tractions",
+            muscle: "Dos",
+            refMax: null,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "bodyweight"
+          },
+          {
+            id: "oiseau_halteres",
+            name: "Oiseau haltères",
+            muscle: "Épaules",
+            refMax: 10,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "per_arm"
+          },
+          {
+            id: "extension_barre_au_front",
+            name: "extension barre au front",
+            muscle: "Triceps",
+            refMax: 25,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "curl_incline_biceps",
+            name: "Curl incliné biceps",
+            muscle: "Biceps",
+            refMax: 12.5,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "total"
+          },
+          {
+            id: "crunch_poulie",
+            name: "Crunch poulie",
+            muscle: "Abdos",
+            refMax: null,
+            gifUrl: null,
+            notesArnaud: "",
+            notesDancho: "",
+            recommendedMode: "virtual"
+          }
+        ]
       }
-    ]
-  },
-
-  B: {
-    name: "Mercredi — Dos / Biceps / Abdos",
-    exercises: [
-
-      {
-        id: "lat_pulldown",
-        name: "Tractions OU Tirage Vertical",
-        muscle: "Dos",
-        refMax: 100,
-        gifUrl: "lat_pulldown.gif",
-        notesArnaud: "4×8–10 • Tirage machine prioritaire • Tractions lestées seulement si fraîcheur ++ • Repos 90–120s.",
-        notesDancho: "4×8–10 • Superset rowing TRX • Tempo contrôlé • Repos 60s.",
-        recommendedMode: "total"
-      },
-
-      {
-        id: "row_machine",
-        name: "Rowing (machine ou haltères appuyés)",
-        muscle: "Dos",
-        refMax: 100,
-        gifUrl: "row_machine.gif",
-        notesArnaud: "4×10–12 • Machine ou haltères appuyés • Éviter rowing barre lourd • RPE ≤9.",
-        notesDancho: "4×10–12 • Tempo lent • Contraction maximale • Superset possible.",
-        recommendedMode: "per_arm"
-      },
-
-      {
-        id: "low_row",
-        name: "Tirage horizontal poulie",
-        muscle: "Dos",
-        refMax: 100,
-        gifUrl: "low_row.gif",
-        notesArnaud: "3×12–15 • Repos complet • Trajectoire propre.",
-        notesDancho: "3×12–15 • Superset curl biceps • Repos 45–60s.",
-        recommendedMode: "total"
-      },
-
-      {
-        id: "incline_curl",
-        name: "Curl barre ou haltères",
-        muscle: "Biceps",
-        refMax: 30,
-        gifUrl: "incline_curl.gif",
-        notesArnaud: "3×10–12 • Charges modérées • Aucun balancement.",
-        notesDancho: "3×10–12 • Superset crunchs • Rythme élevé.",
-        recommendedMode: "per_arm"
-      },
-
-      {
-        id: "core_combo",
-        name: "Crunchs + Gainage",
-        muscle: "Abdos",
-        refMax: null,
-        gifUrl: "abs.gif",
-        notesArnaud: "3 séries • 20 crunchs + gainage long • Focus stabilité.",
-        notesDancho: "3 séries • Gainage lesté ou instable • Intensité max.",
-        recommendedMode: "virtual"
-      },
-
-      {
-        id: "spider_curl",
-        name: "Curl pupitre / Spider curl",
-        muscle: "Biceps",
-        refMax: 30,
-        gifUrl: "spider_curl.gif",
-        notesArnaud: "3×10–12 • Strict • Aucun élan • RPE 8–9 • Repos 45–60s.",
-        notesDancho: "3×10–12 • Dernier set drop-set possible • Contraction maximale.",
-        recommendedMode: "per_arm"
-      }
-    ]
-  },
-
-  C: {
-    name: "Vendredi — Jambes / Full Body / Cardio",
-    exercises: [
-
-      {
-        id: "hack",
-        name: "Hack Squat",
-        muscle: "Quadriceps",
-        refMax: 140,
-        gifUrl: "hack.gif",
-        notesArnaud: "4×8–10 • Lourd • Repos 90s • Mouvement phare • Posture stable.",
-        notesDancho: "4×8–10 • Superset fentes statiques • Charge modérée • Volume élevé.",
-        recommendedMode: "total"
-      },
-
-      {
-        id: "leg_press",
-        name: "Presse à cuisses",
-        muscle: "Quadriceps",
-        refMax: 350,
-        gifUrl: "leg_press.gif",
-        notesArnaud: "4×10–12 • Charges progressives • Repos 120s.",
-        notesDancho: "4×10–12 • Superset mollets • Attention fatigue quadriceps.",
-        recommendedMode: "total"
-      },
-
-      {
-        id: "rdl",
-        name: "Soulevé de terre jambes tendues",
-        muscle: "Ischios",
-        refMax: 100,
-        gifUrl: "rdl.gif",
-        notesArnaud: "3×12 • RPE ≤8.5 • Repos complet • Jamais à l’échec.",
-        notesDancho: "3×12 • Tempo lent • Stretch contrôlé.",
-        recommendedMode: "total"
-      },
-
-      {
-        id: "walking_lunges",
-        name: "Fentes marchées",
-        muscle: "Jambes",
-        refMax: 60,
-        gifUrl: "bulgarian_split.gif",
-        notesArnaud: "3×12 / jambe • Charges modérées • Contrôle.",
-        notesDancho: "3×12 / jambe • Superset gainage dynamique • Rythme élevé.",
-        recommendedMode: "per_arm"
-      },
-
-      {
-        id: "hiit",
-        name: "Cardio HIIT 30s / 30s",
-        muscle: "Cardio",
-        refMax: null,
-        gifUrl: null,
-        notesArnaud: "15 min • Intensité modérée • À éviter si jambes déjà vides.",
-        notesDancho: "15 min • Intensité maximale 🔥",
-        recommendedMode: "bodyweight"
-      },
-
-      {
-        id: "hammer_curl_cable",
-        name: "Curl marteau à la poulie",
-        muscle: "Biceps",
-        refMax: 35,
-        gifUrl: "hammer_curl.gif",
-        notesArnaud: "3×12–15 • RPE 7–8 • Optionnel si fatigue haute • Repos 30–45s.",
-        notesDancho: "3×12–15 • Pompe maximale • Enchaînable avant cardio.",
-        recommendedMode: "per_arm"
-      }
-    ]
-  }
-};
+    };
 
     // Référentiels de performance "haut niveau" par muscle (1RM ou équivalent)
     const musclePerformanceRef = {
@@ -2016,31 +2337,41 @@
     };
 
     // Mapping exercice → muscle (utilisé partout, pas seulement dans les stats)
-    const exerciseToMuscle = {
-      chest_press: "Pecs",
-      db_incline_press: "Pecs",
-      cable_fly_any: "Pecs",
-      triceps_choice: "Triceps",
-      triceps_overhead: "Triceps",
-      lat_raise: "Épaules",
+    let exerciseToMuscle = {};
 
-      lat_pulldown: "Dos",
-      row_machine: "Dos",
-      low_row: "Dos",
+        // Reconstruit le mapping exercice → muscle à partir :
+        // - du programme (5 jours)
+        // - du legacyProgram (pour garder les anciens logs lisibles)
+        // - des exercices personnalisés (sans effacer les anciens IDs déjà connus)
+        function rebuildExerciseToMuscle(includeCustom = false) {
+          const next = { ...(exerciseToMuscle || {}) };
 
-      incline_curl: "Biceps",
-      spider_curl: "Biceps",
-      hammer_curl_cable: "Biceps",
+          function addFromProgram(prog) {
+            if (!prog) return;
+            Object.values(prog).forEach(day => {
+              (day.exercises || []).forEach(ex => {
+                if (ex && ex.id && ex.muscle) next[ex.id] = ex.muscle;
+              });
+            });
+          }
 
-      core_combo: "Abdos",
+          addFromProgram(program);
 
-      hack: "Quadriceps",
-      leg_press: "Quadriceps",
-      rdl: "Ischios",
-      walking_lunges: "Quadriceps",
+          if (typeof legacyProgram !== "undefined") {
+            addFromProgram(legacyProgram);
+          }
 
-      hiit: "Cardio"
-    };
+          if (includeCustom && typeof customExercises !== "undefined" && Array.isArray(customExercises)) {
+            customExercises.forEach(ex => {
+              if (ex && ex.id && ex.muscle) next[ex.id] = ex.muscle;
+            });
+          }
+
+          exerciseToMuscle = next;
+        }
+
+        // Mapping initial (programme + legacy)
+        rebuildExerciseToMuscle(false);
 
     // ========== STATE ==========
     const state = {
@@ -2147,10 +2478,8 @@
           refMax: ex.refMax || null
         }));
 
-      // Injecter dans le mapping muscle
-      customExercises.forEach(ex => {
-        exerciseToMuscle[ex.id] = ex.muscle;
-      });
+      // Rebuild mapping (programme + legacy + custom)
+      rebuildExerciseToMuscle(true);
 
       // Restaurer le dernier exercice sélectionné
       const sel = localStorage.getItem(CUSTOM_EX_SELECTED_KEY);
@@ -2265,7 +2594,8 @@ function loadState() {
         const parsed = JSON.parse(saved);
         state.logs = assignStableIdsToLogs(parsed.logs || []);
         state.user = parsed.user || state.user;
-        state.date = parsed.date || state.date;
+        // On ne restaure pas la date sauvegardée : au démarrage on repart toujours sur la date du jour.
+        // state.date = parsed.date || state.date;
         state.fatigue = parsed.fatigue || state.fatigue;
         state.currentDay = parsed.currentDay || state.currentDay;
       } catch (e) {
@@ -2760,11 +3090,7 @@ function loadState() {
           homeCurrentUser.textContent = user;
 
           const userLogs = state.logs.filter(l => l.user === user);
-          if (userLogs.length > 0) {
-            const dates = [...new Set(userLogs.map(l => l.date))].sort();
-            state.date = dates[dates.length - 1];
-          }
-          saveState();
+          // On ne force pas la date sur la dernière séance : la date affichée reste celle choisie (par défaut : aujourd'hui).
 
           // Pas encore de données
           if (userLogs.length === 0) {
@@ -2874,12 +3200,22 @@ function loadState() {
             if (c) return c;
           }
 
-          // 2) Programme
+          // 2) Programme (5 jours)
           for (const dayKey in program) {
             const day = program[dayKey];
-            const found = day.exercises.find(ex => ex.id === exerciseId);
+            const found = (day.exercises || []).find(ex => ex.id === exerciseId);
             if (found) return found;
           }
+
+          // 3) Legacy programme (pour les anciens logs)
+          if (typeof legacyProgram !== "undefined") {
+            for (const dayKey in legacyProgram) {
+              const day = legacyProgram[dayKey];
+              const found = (day.exercises || []).find(ex => ex.id === exerciseId);
+              if (found) return found;
+            }
+          }
+
           return null;
         }
 
@@ -4762,6 +5098,8 @@ function loadState() {
 
     // ========== INIT ==========
     loadState();
+    // Par défaut, à chaque ouverture de l'app, on repart sur la date du jour.
+    state.date = new Date().toISOString().split("T")[0];
     loadPlayerProfile();
     loadCustomExercises();
     setupFreeExerciseTab();
