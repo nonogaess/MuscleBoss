@@ -2059,6 +2059,42 @@
       "Cardio": 0    // à traiter à part
     };
 
+    // 🔧 Références spécifiques + override par exercice (custom refMax)
+    const SHOULDER_LATERAL_RAISE_REF = 25; // "charge totale effective"
+
+    function isLateralRaiseExercise(def, exerciseId) {
+      const id = String(exerciseId || "").toLowerCase();
+      const name = String(def?.name || "").toLowerCase();
+
+      // Match large : poulie / haltères / toutes variantes
+      return (
+        id.includes("elevations_laterales") ||
+        id.includes("elevation_laterale") ||
+        id.includes("lateral_raise") ||
+        id.includes("lat_raise") ||
+        name.includes("élévations latérales") ||
+        name.includes("elevation laterale") ||
+        name.includes("lateral raise") ||
+        name.includes("lat raise")
+      );
+    }
+
+    function getRefForScore(exerciseId, muscle) {
+      const def = getExerciseDefinition(exerciseId);
+
+      // 1) Si l'exercice a une réf perso (exos libres/custom), on la prend en priorité
+      // (ton UI stocke refMax dans customExercises) :contentReference[oaicite:2]{index=2}
+      if (def && Number(def.refMax) > 0) return Number(def.refMax);
+
+      // 2) Spécial épaules : élévations latérales (poulie OU haltères)
+      if (muscle === "Épaules" && isLateralRaiseExercise(def, exerciseId)) {
+        return SHOULDER_LATERAL_RAISE_REF;
+      }
+
+      // 3) Fallback muscle standard
+      return musclePerformanceRef[muscle] || 0;
+    }
+
     // 🔧 Références spécifiques pour certains exos d’épaules
     // BUT: éviter de comparer les élévations latérales à la réf "Épaules: 70" (presse/développé)
     const shoulderExerciseRef = {
@@ -2931,7 +2967,7 @@ function loadState() {
               const ref = getRefForScore(l.exerciseId, muscle);
               if (!ref || est <= 0) return;
 
-              const ratio = est / ref;       // <- réf spéciale si élévations latérales
+              const ratio = est / ref;
               if (ratio > bestRatio) bestRatio = ratio;
             });
 
