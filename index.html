@@ -891,19 +891,12 @@
       margin: 0 !important;
     }
 
-    /* ABD & CAR centrés sous JAM / EPA */
-    .fifa-stat-abd,
-    .fifa-stat-car {
-      grid-row: 2;          /* seconde ligne */
-      margin-top: 4px;      /* léger espace par rapport à la ligne du dessus */
-    }
-
+    /* ABD centré sous JAM / EPA (CAR supprimé) */
     .fifa-stat-abd {
-      grid-column: 3;       /* colonne de JAM */
-    }
-
-    .fifa-stat-car {
-      grid-column: 4;       /* colonne de EPA */
+      grid-row: 2;
+      grid-column: 3 / span 2; /* prend les colonnes 3 et 4 */
+      margin-top: 4px;
+      justify-self: center;
     }
 
     .fifa-stat-line {
@@ -2181,7 +2174,7 @@
       "Épaules": 102,
       "Biceps": 50,
       "Triceps": 95,
-      "Abdos": 60,    // à traiter à part
+      "Abdos": 175,
       "Cardio": 0    // à traiter à part
     };
 
@@ -3199,16 +3192,15 @@ function loadState() {
           const BIC = Math.round(byMuscle["Biceps"]);
           const ABD = Math.round(byMuscle["Abdos"] || 0);
           const JAM = Math.round((byMuscle["Quadriceps"] + byMuscle["Ischios"]) / 2 || 0);
-          const CAR = Math.round(byMuscle["Cardio"] || 0);
 
           // Base « globale brute »
-          const averageBase = (PEC + DOS + EPA + TRI + BIC + ABD + JAM + CAR + ipgData.ipg) / 9 || 0;
+          const averageBase = (PEC + DOS + EPA + TRI + BIC + ABD + JAM + ipgData.ipg) / 9 || 0;
 
           // On comprime comme dans FIFA : plutôt 40–94 que 0–100
           let GEN = Math.round(30 + averageBase * 0.6);
           GEN = clamp(GEN, 40, 94);
 
-          return { GEN, PEC, DOS, EPA, TRI, BIC, ABD, JAM, CAR };
+          return { GEN, PEC, DOS, EPA, TRI, BIC, ABD, JAM };
         }
 
         function renderFifaCard() {
@@ -3267,14 +3259,10 @@ function loadState() {
               <div class="fifa-stat-line"><span class="fifa-stat-label">TRI</span><span class="fifa-stat-value">${stats.TRI}</span></div>
               <div class="fifa-stat-line"><span class="fifa-stat-label">BIC</span><span class="fifa-stat-value">${stats.BIC}</span></div>
 
-              <!-- Ligne du dessous : ABD & CAR centrés -->
+              <!-- Ligne du dessous : ABD centré -->
               <div class="fifa-stat-line fifa-stat-abd">
                 <span class="fifa-stat-label">ABD</span>
                 <span class="fifa-stat-value">${stats.ABD}</span>
-              </div>
-              <div class="fifa-stat-line fifa-stat-car">
-                <span class="fifa-stat-label">CAR</span>
-                <span class="fifa-stat-value">${stats.CAR}</span>
               </div>
             </div>
           `;
@@ -3291,7 +3279,6 @@ function loadState() {
             ${buildFifaBarRow("TRI (triceps)", stats.TRI)}
             ${buildFifaBarRow("BIC (biceps)", stats.BIC)}
             ${buildFifaBarRow("ABDOS", stats.ABD)}
-            ${buildFifaBarRow("CARDIO", stats.CAR)}
           `;
 
           if (exerciseScores.length > 0) {
