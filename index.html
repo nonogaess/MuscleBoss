@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>💪 Muscle Boss Ultimate V2</title>
+  <title>Muscle Boss</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
    <!-- PWA -->
   <link rel="manifest" href="manifest.json">
@@ -2174,19 +2174,19 @@
 
     // Référentiels de performance "haut niveau" par muscle (1RM ou équivalent)
     const musclePerformanceRef = {
-      "Pecs": 140,
-      "Dos": 160,
-      "Quadriceps": 220,
-      "Ischios": 140,
-      "Épaules": 70,
+      "Pecs": 157,
+      "Dos": 139,
+      "Quadriceps": 406,
+      "Ischios": 211,
+      "Épaules": 102,
       "Biceps": 50,
-      "Triceps": 70,
+      "Triceps": 95,
       "Abdos": 60,    // à traiter à part
       "Cardio": 0    // à traiter à part
     };
 
     // 🔧 Références spécifiques + override par exercice (custom refMax)
-    const SHOULDER_LATERAL_RAISE_REF = 25; // "charge totale effective"
+    const SHOULDER_LATERAL_RAISE_REF = 36; // "charge totale effective"
 
     function isLateralRaiseExercise(def, exerciseId) {
       const id = String(exerciseId || "").toLowerCase();
@@ -2226,8 +2226,8 @@
     const shoulderExerciseRef = {
       // Réf exprimée en "charge totale effective"
       // (donc si tu logges en per_arm, le 1RM est déjà doublé par getEffectiveWeightFor1RM)
-      "lat_raise": 25,
-      "elevations_laterales_poulie": 25
+      "lat_raise": 36,
+      "elevations_laterales_poulie": 36
     };
 
     function getRefForScore(exerciseId, muscle) {
@@ -2237,7 +2237,7 @@
         // fallback si tu crées d’autres variantes d’élévations latérales
         if (typeof exerciseId === "string" &&
             (exerciseId.includes("elevations_laterales") || exerciseId.includes("lat_raise"))) {
-          return 25;
+          return 36;
         }
       }
       return musclePerformanceRef[muscle] || 0;
@@ -2667,7 +2667,7 @@ function loadState() {
 
       if (mode === "per_arm") {
         // Cohérence avec le volume : si tu logges "par bras", on considère la charge totale pour la force.
-        return w * 2;
+        return w;
       }
 
       if (mode === "virtual") {
